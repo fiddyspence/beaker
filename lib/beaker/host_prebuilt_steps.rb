@@ -19,7 +19,7 @@ module Beaker
     SLES10_PACKAGES = ['curl']
     SLES_PACKAGES = ['curl', 'ntp']
     DEBIAN_PACKAGES = ['curl', 'ntpdate', 'lsb-release']
-    CUMULUS_PACKAGES = ['addons', 'ntpdate', 'lsb-release']
+    CUMULUS_PACKAGES = ['curl', 'ntpdate']
     ETC_HOSTS_PATH = "/etc/hosts"
     ETC_HOSTS_PATH_SOLARIS = "/etc/inet/hosts"
     ROOT_KEYS_SCRIPT = "https://raw.githubusercontent.com/puppetlabs/puppetlabs-sshkeys/master/templates/scripts/manage_root_authorized_keys"
@@ -55,7 +55,7 @@ module Beaker
           try = 0
           until try >= TRIES do
             try += 1
-            if host.exec(Command.new(ntp_command), :acceptable_exit_codes => (0..255)).exit_code == 0
+            if host.exec(Command.new(ntp_command), :accept_all_exit_codes => true).exit_code == 0
               success=true
               break
             end
@@ -139,9 +139,9 @@ module Beaker
       logger.notify "Sync root authorized_keys from github on #{host.name}"
         # Allow all exit code, as this operation is unlikely to cause problems if it fails.
         if host['platform'] =~ /solaris|eos/
-          host.exec(Command.new(ROOT_KEYS_SYNC_CMD % "bash"), :acceptable_exit_codes => (0..255))
+          host.exec(Command.new(ROOT_KEYS_SYNC_CMD % "bash"), :accept_all_exit_codes => true)
         else
-          host.exec(Command.new(ROOT_KEYS_SYNC_CMD % "env PATH=/usr/gnu/bin:$PATH bash"), :acceptable_exit_codes => (0..255))
+          host.exec(Command.new(ROOT_KEYS_SYNC_CMD % "env PATH=/usr/gnu/bin:$PATH bash"), :accept_all_exit_codes => true)
         end
       end
     rescue => e
@@ -359,7 +359,7 @@ module Beaker
           host.exec(Command.new("sudo sed -i '' 's/#PermitRootLogin yes/PermitRootLogin Yes/g' /etc/sshd_config"))
         elsif host['platform'] =~ /freebsd/
           host.exec(Command.new("sudo sed -i -e 's/#PermitRootLogin no/PermitRootLogin yes/g' /etc/ssh/sshd_config"), {:pty => true} )
-        elsif host.is_cygwin?
+        elsif not host.is_powershell?
           host.exec(Command.new("sudo su -c \"sed -ri 's/^#?PermitRootLogin no|^#?PermitRootLogin yes/PermitRootLogin yes/' /etc/ssh/sshd_config\""), {:pty => true})
         else
           logger.warn("Attempting to enable root login non-supported platform: #{host.name}: #{host['platform']}")
@@ -368,7 +368,7 @@ module Beaker
         if host['platform'] =~ /debian|ubuntu|cumulus/
           host.exec(Command.new("sudo su -c \"service ssh restart\""), {:pty => true})
         elsif host['platform'] =~ /centos-7|el-7|redhat-7/
-          host.exec(Command.new("sudo -E systemctl restart sshd.service"), {:ptry => true})
+          host.exec(Command.new("sudo -E systemctl restart sshd.service"), {:pty => true})
         elsif host['platform'] =~ /centos|el-|redhat|fedora|eos/
           host.exec(Command.new("sudo -E /sbin/service sshd reload"), {:pty => true})
         elsif host['platform'] =~ /freebsd/
@@ -461,10 +461,10 @@ module Beaker
     # @param [String] val The string to 'echo' on the host
     def echo_on_host host, val
       #val = val.gsub(/"/, "\"").gsub(/\(/, "\(")
-      if host.is_cygwin?
-        host.exec(Command.new("echo \"#{val}\"")).stdout.chomp
-      else
+      if host.is_powershell?
         host.exec(Command.new("echo #{val}")).stdout.chomp
+      else
+        host.exec(Command.new("echo \"#{val}\"")).stdout.chomp
       end
     end
 
@@ -488,7 +488,7 @@ module Beaker
 
       env.each_key do |key|
         separator = host['pathseparator']
-        if key == 'PATH' && host.is_cygwin?
+        if key == 'PATH' && (not host.is_powershell?)
           separator = ':'
         end
         env[key] = env[key].join(separator)
@@ -548,7 +548,7 @@ module Beaker
           host.exec(Command.new("sudo /etc/rc.d/sshd restart"))
         end
 
-        if host['platform'] !~ /windows/ or (host['platform'] =~ /windows/ and host.is_cygwin?)
+        if not host.is_powershell?
           #ensure that ~/.ssh/environment exists
           host.exec(Command.new("mkdir -p #{Pathname.new(host[:ssh_env_file]).dirname}"))
           host.exec(Command.new("chmod 0600 #{Pathname.new(host[:ssh_env_file]).dirname}"))
@@ -565,10 +565,10 @@ module Beaker
         host.close
 
         # print out the working env
-        if host.is_cygwin?
-          host.exec(Command.new("cat #{host[:ssh_env_file]}"))
-        else
+        if host.is_powershell?
           host.exec(Command.new("SET"))
+        else
+          host.exec(Command.new("cat #{host[:ssh_env_file]}"))
         end
 
       end

@@ -8,7 +8,7 @@ module Unix::Pkg
   end
 
   def check_for_command(name)
-    result = exec(Beaker::Command.new("which #{name}"), :acceptable_exit_codes => (0...127))
+    result = exec(Beaker::Command.new("which #{name}"), :accept_all_exit_codes => true)
     case self['platform']
     when /solaris-10/
       result.stdout =~ %r|/.*/#{name}|
@@ -20,25 +20,25 @@ module Unix::Pkg
   def check_for_package(name)
     case self['platform']
       when /sles-10/
-        result = exec(Beaker::Command.new("zypper se -i --match-exact #{name}"), :acceptable_exit_codes => (0...127))
+        result = exec(Beaker::Command.new("zypper se -i --match-exact #{name}"), :accept_all_exit_codes => true)
         result.stdout =~ /No packages found/ ? (return false) : (return result.exit_code == 0)
       when /sles-/
-        result = exec(Beaker::Command.new("zypper se -i --match-exact #{name}"), :acceptable_exit_codes => (0...127))
+        result = exec(Beaker::Command.new("zypper se -i --match-exact #{name}"), :accept_all_exit_codes => true)
       when /el-4/
         @logger.debug("Package query not supported on rhel4")
         return false
       when /fedora|centos|eos|el-/
-        result = exec(Beaker::Command.new("rpm -q #{name}"), :acceptable_exit_codes => (0...127))
+        result = exec(Beaker::Command.new("rpm -q #{name}"), :accept_all_exit_codes => true)
       when /ubuntu|debian|cumulus/
-        result = exec(Beaker::Command.new("dpkg -s #{name}"), :acceptable_exit_codes => (0...127))
+        result = exec(Beaker::Command.new("dpkg -s #{name}"), :accept_all_exit_codes => true)
       when /solaris-11/
-        result = exec(Beaker::Command.new("pkg info #{name}"), :acceptable_exit_codes => (0...127))
+        result = exec(Beaker::Command.new("pkg info #{name}"), :accept_all_exit_codes => true)
       when /solaris-10/
-        result = exec(Beaker::Command.new("pkginfo #{name}"), :acceptable_exit_codes => (0...127))
+        result = exec(Beaker::Command.new("pkginfo #{name}"), :accept_all_exit_codes => true)
       when /freebsd-9/
-        result = exec(Beaker::Command.new("pkg_info #{name}"), :acceptable_exit_codes => (0...127))
+        result = exec(Beaker::Command.new("pkg_info #{name}"), :accept_all_exit_codes => true)
       when /freebsd-10/
-        result = exec(Beaker::Command.new("pkg info #{name}"), :acceptable_exit_codes => (0...127))
+        result = exec(Beaker::Command.new("pkg info #{name}"), :accept_all_exit_codes => true)
       else
         raise "Package #{name} cannot be queried on #{self}"
     end
@@ -211,4 +211,17 @@ module Unix::Pkg
         raise "Package repo cannot be deployed on #{self}; the platform is not supported"
     end
   end
+
+  #Examine the host system to determine the architecture
+  #@return [Boolean] true if x86_64, false otherwise
+  def determine_if_x86_64
+    if self[:platform] =~ /solaris/
+      result = exec(Beaker::Command.new("uname -a | grep x86_64"), :accept_all_exit_codes => true)
+        result.exit_code == 0
+    else
+      result = exec(Beaker::Command.new("arch | grep x86_64"), :accept_all_exit_codes => true)
+      result.exit_code == 0
+    end
+  end
+
 end
