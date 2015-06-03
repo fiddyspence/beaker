@@ -64,11 +64,32 @@ module Beaker
           image_name = image.id
         end
 
+        image_hash = {
+           'Image'    => image.id,
+           'Hostname' => host.name,
+        }
+
+        # If there are some global docker options, apply them to the image
+        # Do this first, so that the specific instance can override if necessary
+        # Note - privileged is always set to true below
+        if options[:dockeropts]
+          options[:dockeropts].each do |k,v|
+            image_hash[k] = v
+          end
+        end
+
+        # If there are some instance specific docker options, apply them to the image
+        # Do this second so they override any global options
+        # Note - privileged is always set to true below
+        if host[:dockeropts]
+          host[:dockeropts].each do |k,v|
+            image_hash[k] = v
+          end
+        end
+
         @logger.debug("Creating container from image #{image_name}")
-        container = ::Docker::Container.create({
-          'Image' => image_name,
-          'Hostname' => host.name,
-        })
+
+        container = ::Docker::Container.create(image_hash)
 
         @logger.debug("Starting container #{container.id}")
         container.start({"PublishAllPorts" => true, "Privileged" => true})
