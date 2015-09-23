@@ -3,20 +3,28 @@ module Beaker
   # all String methods while adding several platform-specific use cases.
   class Platform < String
     # Supported platforms
-    PLATFORMS = /^(freebsd|osx|centos|fedora|debian|oracle|redhat|scientific|sles|ubuntu|windows|solaris|aix|el|eos|cumulus)\-.+\-.+$/
+    PLATFORMS = /^(cisco|(free|open)bsd|osx|centos|fedora|debian|oracle|redhat|scientific|sles|ubuntu|windows|solaris|aix|el|eos|cumulus|f5)\-.+\-.+$/
 
     # Platform version numbers vs. codenames conversion hash
     PLATFORM_VERSION_CODES =
-      { :debian => { "wheezy"  => "7",
+      { :debian => { "jessie"  => "8",
+                     "wheezy"  => "7",
                      "squeeze" => "6",
                    },
-        :ubuntu => { "trusty"  => "1404",
+        :ubuntu => { "wily"    => "1510",
+                     "vivid"   => "1504",
+                     "utopic"  => "1410",
+                     "trusty"  => "1404",
                      "saucy"   => "1310",
                      "raring"  => "1304",
                      "quantal" => "1210",
                      "precise" => "1204",
                      "lucid"   => "1004",
                    },
+        :osx =>    { "elcapitan" => "1011",
+                     "yosemite"  => "1010",
+                     "mavericks" => "109",
+                   }
       }
 
     # A string with the name of the platform.
@@ -35,6 +43,8 @@ module Beaker
     # Creates the Platform object.  Checks to ensure that the platform String
     # provided meets the platform formatting rules.  Platforms name must be of
     # the format /^OSFAMILY-VERSION-ARCH.*$/ where OSFAMILY is one of:
+    # * freebsd
+    # * openbsd
     # * osx
     # * centos
     # * fedora

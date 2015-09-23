@@ -16,6 +16,8 @@ module Beaker
       @logger = Beaker::Logger.new(@options)
       @options[:logger] = @logger
       @options[:timestamp] = @timestamp
+      @options[:beaker_version] = Beaker::Version::STRING
+      beaker_version_string = VERSION_STRING % @options[:beaker_version]
       @execute = true
 
       if @options[:help]
@@ -23,11 +25,13 @@ module Beaker
         @execute = false
         return
       end
-      if @options[:version]
-        @logger.notify(VERSION_STRING % Beaker::Version::STRING)
+      if @options[:beaker_version_print]
+        @logger.notify(beaker_version_string)
         @execute = false
         return
       end
+      @logger.info("Beaker!")
+      @logger.info(beaker_version_string)
       @logger.info(@options.dump)
       if @options[:parse_only]
         @execute = false
@@ -90,7 +94,7 @@ module Beaker
 
         #testing phase
         begin
-          run_suite(:tests)
+          run_suite(:tests, @options[:fail_mode])
         #post acceptance phase
         rescue => e
           #post acceptance on failure
@@ -143,7 +147,7 @@ module Beaker
     #@param [Symbol] suite_name The test suite to execute
     #@param [String] failure_strategy How to proceed after a test failure, 'fast' = stop running tests immediately, 'slow' =
     #                                 continue to execute tests.
-    def run_suite(suite_name, failure_strategy = :slow)
+    def run_suite(suite_name, failure_strategy = nil)
       if (@options[suite_name].empty?)
         @logger.notify("No tests to run for suite '#{suite_name.to_s}'")
         return
@@ -161,20 +165,31 @@ module Beaker
     #
     # @return nil
     def preserve_hosts_file
+      # things that don't belong in the preserved host file
+      dontpreserve = /HOSTS|logger|timestamp|log_prefix|_dated_dir|logger_sut/
+      # set the pre/post/tests to be none
+      @options[:pre_suite] = []
+      @options[:post_suite] = []
+      @options[:tests] = []
       preserved_hosts_filename = File.join(@options[:log_dated_dir], 'hosts_preserved.yml')
       FileUtils.cp(@options[:hosts_file], preserved_hosts_filename)
       hosts_yaml = YAML.load_file(preserved_hosts_filename)
       newly_keyed_hosts_entries = {}
-      hosts_yaml['HOSTS'].each do |host_name, host_hash|
+      hosts_yaml['HOSTS'].each do |host_name, file_host_hash|
+        h = Beaker::Options::OptionsHash.new
+        file_host_hash = h.merge(file_host_hash)
         @hosts.each do |host|
-          if host_name == host.instance_variable_get(:@name)
-            newly_keyed_hosts_entries[host.to_s] = host_hash
+          if host_name == host.name
+            newly_keyed_hosts_entries[host.reachable_name] = file_host_hash.merge(host.host_hash)
             break
           end
         end
       end
       hosts_yaml['HOSTS'] = newly_keyed_hosts_entries
-      hosts_yaml['CONFIG'] ||= {}
+      hosts_yaml['CONFIG'] = Beaker::Options::OptionsHash.new.merge(hosts_yaml['CONFIG'] || {})
+      # save the rest of the options, excepting the HOSTS that we have already processed
+      hosts_yaml['CONFIG'] = hosts_yaml['CONFIG'].merge(@options.reject{ |k,v| k =~ dontpreserve })
+      # remove copy of HOSTS information
       hosts_yaml['CONFIG']['provision'] = false
       File.open(preserved_hosts_filename, 'w') do |file|
         YAML.dump(hosts_yaml, file)

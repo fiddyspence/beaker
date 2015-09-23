@@ -11,6 +11,7 @@ module Beaker
   # vendor API.
   class AwsSdk < Beaker::Hypervisor
     ZOMBIE = 3 #anything older than 3 hours is considered a zombie
+    PING_SECURITY_GROUP_NAME = 'beaker-ping'
 
     # Initialize AwsSdk hypervisor driver
     #
@@ -21,8 +22,8 @@ module Beaker
       @options = options
       @logger = options[:logger]
 
-      # Get fog credentials from the local .fog file
-      creds = load_fog_credentials(@options[:dot_fog])
+      # Get AWS credentials
+      creds = load_credentials()
 
       config = {
         :access_key_id => creds[:access_key],
@@ -45,6 +46,8 @@ module Beaker
 
       # Perform the main launch work
       launch_all_nodes()
+
+      wait_for_status_f5()
 
       # Add metadata tags to each instance
       add_tags()
@@ -126,7 +129,7 @@ module Beaker
 
     # Return all instances currently on ec2.
     # @see AwsSdk#instance_by_id
-    # @return [Array<AWS::EC2::Instance>] An array of AWS::EC2 instance objects
+    # @return [AWS::EC2::InstanceCollection] An array of AWS::EC2 instance objects
     def instances
       @ec2.instances
     end
@@ -141,7 +144,7 @@ module Beaker
 
     # Return all VPCs currently on ec2.
     # @see AwsSdk#vpc_by_id
-    # @return [Array<AWS::EC2::VPC>] An array of AWS::EC2 vpc objects
+    # @return [AWS::EC2::VPCCollection] An array of AWS::EC2 vpc objects
     def vpcs
       @ec2.vpcs
     end
@@ -156,7 +159,7 @@ module Beaker
 
     # Return all security groups currently on ec2.
     # @see AwsSdk#security_goup_by_id
-    # @return [Array<AWS::EC2::SecurityGroup>] An array of AWS::EC2 security group objects
+    # @return [AWS::EC2::SecurityGroupCollection] An array of AWS::EC2 security group objects
     def security_groups
       @ec2.security_groups
     end
@@ -223,7 +226,7 @@ module Beaker
 
     # Create an EC2 instance for host, tag it, and return it.
     #
-    # @return [AWS::EC2::Instance)]
+    # @return [void]
     # @api private
     def create_instance(host, ami_spec, subnet_id)
       amitype = host['vmname'] || host['platform']
@@ -267,26 +270,32 @@ module Beaker
         raise RuntimeError, "Image not found: #{image_id}"
       end
 
+      @logger.notify("Image Storage Type: #{image.root_device_type}")
+
       # Transform the images block_device_mappings output into a format
       # ready for a create.
-      orig_bdm = image.block_device_mappings()
-      @logger.notify("aws-sdk: Image block_device_mappings: #{orig_bdm.to_hash}")
       block_device_mappings = []
-      orig_bdm.each do |device_name, rest|
-        block_device_mappings << {
-          :device_name => device_name,
-          :ebs => {
-            # Change the default size of the root volume.
-            :volume_size => host['volume_size'] || rest[:volume_size],
-            # This is required to override the images default for
-            # delete_on_termination, forcing all volumes to be deleted once the
-            # instance is terminated.
-            :delete_on_termination => true,
+      if image.root_device_type == :ebs
+        orig_bdm = image.block_device_mappings()
+        @logger.notify("aws-sdk: Image block_device_mappings: #{orig_bdm.to_hash}")
+        orig_bdm.each do |device_name, rest|
+          block_device_mappings << {
+            :device_name => device_name,
+            :ebs => {
+              # Change the default size of the root volume.
+              :volume_size => host['volume_size'] || rest[:volume_size],
+              # This is required to override the images default for
+              # delete_on_termination, forcing all volumes to be deleted once the
+              # instance is terminated.
+              :delete_on_termination => true,
+            }
           }
-        }
+        end
       end
 
       security_group = ensure_group(vpc || region, Beaker::EC2Helper.amiports(host))
+      #check if ping is enabled
+      ping_security_group = ensure_ping_group(vpc || region)
 
       msg = "aws-sdk: launching %p on %p using %p/%p%s" %
             [host.name, amitype, amisize, image_type,
@@ -297,13 +306,13 @@ module Beaker
         :image_id => image_id,
         :monitoring_enabled => true,
         :key_pair => ensure_key_pair(region),
-        :security_groups => [security_group],
+        :security_groups => [security_group, ping_security_group],
         :instance_type => amisize,
         :disable_api_termination => false,
         :instance_initiated_shutdown_behavior => "terminate",
-        :block_device_mappings => block_device_mappings,
         :subnet => subnet_id,
       }
+      config[:block_device_mappings] = block_device_mappings if image.root_device_type == :ebs
       region.instances.create(config)
     end
 
@@ -415,9 +424,13 @@ module Beaker
     #
     # @param status [Symbol] EC2 state to wait for, :running :stopped etc.
     # @param instances Enumerable<Hash{Symbol=>EC2::Instance,Host}>
+    # @param block [Proc] more complex checks can be made by passing a
+    #                     block in.  This overrides the status parameter.
+    #                     EC2::Instance objects from the hosts will be
+    #                     yielded to the passed block
     # @return [void]
     # @api private
-    def wait_for_status(status, instances)
+    def wait_for_status(status, instances, &block)
       # Wait for each node to reach status :running
       @logger.notify("aws-sdk: Waiting for all hosts to be #{status}")
       instances.each do |x|
@@ -429,7 +442,12 @@ module Beaker
         # TODO: should probably be a in a shared method somewhere
         for tries in 1..10
           begin
-            if instance.status == status
+            if block_given?
+              test_result = yield instance
+            else
+              test_result = instance.status == status
+            end
+            if test_result
               # Always sleep, so the next command won't cause a throttle
               backoff_sleep(tries)
               break
@@ -440,6 +458,29 @@ module Beaker
             @logger.debug("Instance #{name} not yet available (#{e})")
           end
           backoff_sleep(tries)
+        end
+      end
+    end
+
+    # Handles special checks needed for f5 platforms.
+    #
+    # @note if any host is an f5 one, these checks will happen once across all
+    #   of the hosts, and then we'll exit
+    #
+    # @return [void]
+    # @api private
+    def wait_for_status_f5()
+      @hosts.each do |host|
+        if host['platform'] =~ /f5/
+          wait_for_status(:running, @hosts)
+
+          wait_for_status(nil, @hosts) do |instance|
+            instance_status_collection = instance.client.describe_instance_status({:instance_ids => [instance.id]})
+            first_instance = instance_status_collection[:instance_status_set].first
+            first_instance[:system_status][:status] == "ok"
+          end
+
+          break
         end
       end
     end
@@ -473,7 +514,7 @@ module Beaker
       @hosts.each do |host|
         @logger.notify("aws-sdk: Populate DNS for #{host.name}")
         instance = host['instance']
-        host['ip'] = instance.ip_address
+        host['ip'] = instance.ip_address ? instance.ip_address : instance.private_ip_address
         host['private_ip'] = instance.private_ip_address
         host['dns_name'] = instance.dns_name
         @logger.notify("aws-sdk: name: #{host.name} ip: #{host['ip']} private_ip: #{host['private_ip']} dns_name: #{instance.dns_name}")
@@ -482,28 +523,35 @@ module Beaker
       nil
     end
 
+    # Return a valid /etc/hosts line for a given host
+    #
+    # @param [Beaker::Host] host Beaker::Host object for generating /etc/hosts entry
+    # @param [Symbol] interface Symbol identifies which ip should be used for host
+    # @return [String] formatted hosts entry for host
+    # @api private
+    def etc_hosts_entry(host, interface = :ip)
+      name = host.name
+      domain = get_domain_name(host)
+      ip = host[interface.to_s]
+      "#{ip}\t#{name} #{name}.#{domain} #{host['dns_name']}\n"
+    end
+
     # Configure /etc/hosts for each node
+    #
+    # @note f5 hosts are skipped since this isn't a valid step there
     #
     # @return [void]
     # @api private
     def configure_hosts
       @hosts.each do |host|
-        etc_hosts = "127.0.0.1\tlocalhost localhost.localdomain\n"
-        name = host.name
-        domain = get_domain_name(host)
-        ip = host['private_ip']
-        etc_hosts += "#{ip}\t#{name} #{name}.#{domain} #{host['dns_name']}\n"
-        @hosts.each do |neighbor|
-          if neighbor == host
-            next
-          end
-          name = neighbor.name
-          domain = get_domain_name(neighbor)
-          ip = neighbor['ip']
-          etc_hosts += "#{ip}\t#{name} #{name}.#{domain} #{neighbor['dns_name']}\n"
+        next if host['platform'] =~ /f5/
+        host_entries = @hosts.map do |h|
+          h == host ? etc_hosts_entry(h, :private_ip) : etc_hosts_entry(h)
         end
-        set_etc_hosts(host, etc_hosts)
+        host_entries.unshift "127.0.0.1\tlocalhost localhost.localdomain\n"
+        set_etc_hosts(host, host_entries.join(''))
       end
+      nil
     end
 
     # Enables root for instances with custom username like ubuntu-amis
@@ -522,11 +570,46 @@ module Beaker
     # @api private
     def enable_root(host)
       if host['user'] != 'root'
-        copy_ssh_to_root(host, @options)
-        enable_root_login(host, @options)
-        host['user'] = 'root'
+        if host['platform'] =~ /f5-/
+          enable_root_f5(host)
+        else
+          copy_ssh_to_root(host, @options)
+          enable_root_login(host, @options)
+          host['user'] = 'root'
+        end
         host.close
       end
+    end
+
+    # Enables root access for a host on an f5 platform
+    # @note This method does not support other platforms
+    #
+    # @return nil
+    # @api private
+    def enable_root_f5(host)
+      for tries in 1..10
+        begin
+          #This command is problematic as the F5 is not always done loading
+          if host.exec(Command.new("modify sys db systemauth.disablerootlogin value false"), :acceptable_exit_codes => [0,1]).exit_code == 0 \
+              and host.exec(Command.new("modify sys global-settings gui-setup disabled"), :acceptable_exit_codes => [0,1]).exit_code == 0 \
+              and host.exec(Command.new("save sys config"), :acceptable_exit_codes => [0,1]).exit_code == 0
+            backoff_sleep(tries)
+            break
+          elsif tries == 10
+            raise "Instance was unable to be configured"
+          end
+        rescue Beaker::Host::CommandFailure => e
+          @logger.debug("Instance not yet configured (#{e})")
+        end
+        backoff_sleep(tries)
+      end
+      host['user'] = 'root'
+      host.close
+      sha256 = Digest::SHA256.new
+      password = sha256.hexdigest((1..50).map{(rand(86)+40).chr}.join.gsub(/\\/,'\&\&'))
+      host['ssh'] = {:password => password}
+      host.exec(Command.new("echo -e '#{password}\\n#{password}' | tmsh modify auth password admin"))
+      @logger.notify("f5: Configured admin password to be #{password}")
     end
 
     # Set the hostname of all instances to be the hostname defined in the
@@ -565,15 +648,21 @@ module Beaker
     # @return [String] contents of public key
     # @api private
     def public_key
-      filename = File.expand_path('~/.ssh/id_rsa.pub')
-      unless File.exists? filename
-        filename = File.expand_path('~/.ssh/id_dsa.pub')
-        unless File.exists? filename
-          raise RuntimeError, 'Expected either ~/.ssh/id_rsa.pub or ~/.ssh/id_dsa.pub but found neither'
-        end
+      keys = Array(@options[:ssh][:keys])
+      keys << '~/.ssh/id_rsa'
+      keys << '~/.ssh/id_dsa'
+      key_file = nil
+      keys.each do |key|
+        key_filename = File.expand_path(key + '.pub')
+        key_file = key_filename if File.exists?(key_filename)
       end
 
-      File.read(filename)
+      if key_file
+        @logger.debug("Using public key: #{key_file}")
+      else
+        raise RuntimeError, "Expected to find a public key, but couldn't in #{keys}"
+      end
+      File.read(key_file)
     end
 
     # Generate a reusable key name from the local hosts hostname
@@ -634,6 +723,25 @@ module Beaker
     # Accepts a VPC as input for checking & creation.
     #
     # @param vpc [AWS::EC2::VPC] the AWS vpc control object
+    # @return [AWS::EC2::SecurityGroup] created security group
+    # @api private
+    def ensure_ping_group(vpc)
+      @logger.notify("aws-sdk: Ensure security group exists that enables ping, create if not")
+
+      group = vpc.security_groups.filter('group-name', PING_SECURITY_GROUP_NAME).first
+
+      if group.nil?
+        group = create_ping_group(vpc)
+      end
+
+      group
+    end
+
+    # Return an existing group, or create new one
+    #
+    # Accepts a VPC as input for checking & creation.
+    #
+    # @param vpc [AWS::EC2::VPC] the AWS vpc control object
     # @param ports [Array<Number>] an array of port numbers
     # @return [AWS::EC2::SecurityGroup] created security group
     # @api private
@@ -646,6 +754,23 @@ module Beaker
       if group.nil?
         group = create_group(vpc, ports)
       end
+
+      group
+    end
+
+    # Create a new ping enabled security group
+    #
+    # Accepts a region or VPC for group creation.
+    #
+    # @param rv [AWS::EC2::Region, AWS::EC2::VPC] the AWS region or vpc control object
+    # @return [AWS::EC2::SecurityGroup] created security group
+    # @api private
+    def create_ping_group(rv)
+      @logger.notify("aws-sdk: Creating group #{PING_SECURITY_GROUP_NAME}")
+      group = rv.security_groups.create(PING_SECURITY_GROUP_NAME,
+                                        :description => "Custom Beaker security group to enable ping")
+
+      group.allow_ping
 
       group
     end
@@ -675,6 +800,32 @@ module Beaker
       group
     end
 
+    # Return a hash containing AWS credentials
+    #
+    # @return [Hash<Symbol, String>] AWS credentials
+    # @api private
+    def load_credentials
+      return load_env_credentials unless load_env_credentials.empty?
+      load_fog_credentials(@options[:dot_fog])
+    end
+
+    # Return AWS credentials loaded from environment variables
+    #
+    # @param prefix [String] environment variable prefix
+    # @return [Hash<Symbol, String>] ec2 credentials
+    # @api private
+    def load_env_credentials(prefix='AWS')
+      provider = AWS::Core::CredentialProviders::ENVProvider.new prefix
+
+      if provider.set?
+        {
+          :access_key => provider.access_key_id,
+          :secret_key => provider.secret_access_key,
+        }
+      else
+        {}
+      end
+    end
     # Return a hash containing the fog credentials for EC2
     #
     # @param dot_fog [String] dot fog path
@@ -682,16 +833,15 @@ module Beaker
     # @api private
     def load_fog_credentials(dot_fog = '.fog')
       fog = YAML.load_file( dot_fog )
-
       default = fog[:default]
 
-      creds = {}
-      creds[:access_key] = default[:aws_access_key_id]
-      creds[:secret_key] = default[:aws_secret_access_key]
-      raise "You must specify an aws_access_key_id in your .fog file (#{dot_fog}) for ec2 instances!" unless creds[:access_key]
-      raise "You must specify an aws_secret_access_key in your .fog file (#{dot_fog}) for ec2 instances!" unless creds[:secret_key]
+      raise "You must specify an aws_access_key_id in your .fog file (#{dot_fog}) for ec2 instances!" unless default[:aws_access_key_id]
+      raise "You must specify an aws_secret_access_key in your .fog file (#{dot_fog}) for ec2 instances!" unless default[:aws_secret_access_key]
 
-      creds
+      {
+        :access_key => default[:aws_access_key_id],
+        :secret_key => default[:aws_secret_access_key],
+      }
     end
   end
 end

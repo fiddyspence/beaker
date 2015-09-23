@@ -27,10 +27,11 @@ end
 module HostHelpers
   HOST_DEFAULTS = { :platform => 'unix',
                     :snapshot => 'pe',
-                    :box => 'box_name',
                     :roles => ['agent'],
                     :snapshot => 'snap',
                     :ip => 'default.ip.address',
+                    :private_ip => 'private.ip.address',
+                    :dns_name => 'default.box.tld',
                     :box => 'default_box_name',
                     :box_url => 'http://default.box.url',
   }
@@ -40,7 +41,9 @@ module HostHelpers
   HOST_IP       = "ip.address.for.%s"
   HOST_BOX      = "%s_of_my_box"
   HOST_BOX_URL  = "http://address.for.my.box.%s"
+  HOST_DNS_NAME = "%s.box.tld"
   HOST_TEMPLATE = "%s_has_a_template"
+  HOST_PRIVATE_IP = "private.ip.for.%s"
 
   def logger
     double( 'logger' ).as_null_object
@@ -50,7 +53,7 @@ module HostHelpers
     opts = Beaker::Options::Presets.new
     opts.presets.merge( opts.env_vars ).merge( { :logger => logger,
                                                :host_config => 'sample.config',
-                                               :type => :foss,
+                                               :type => nil,
                                                :pooling_api => 'http://vcloud.delivery.puppetlabs.net/',
                                                :datastore => 'instance0',
                                                :folder => 'Delivery/Quality Assurance/Staging/Dynamic',
@@ -77,12 +80,13 @@ module HostHelpers
     make_opts.merge( { 'HOSTS' => { name => opts } } ).merge( opts )
   end
 
-  def make_host name, opts
-    opts = HOST_DEFAULTS.merge(opts)
+  def make_host name, host_hash
+    host_hash = Beaker::Options::OptionsHash.new.merge(HOST_DEFAULTS.merge(host_hash))
 
-    host = Beaker::Host.create( name, make_host_opts(name, opts) )
+    host = Beaker::Host.create( name, host_hash, make_opts)
 
-    allow(host).to receive( :exec ).and_return( generate_result( name, opts ) )
+    allow(host).to receive( :exec ).and_return( generate_result( name, host_hash ) )
+    allow(host).to receive( :close )
     host
   end
 
@@ -92,12 +96,18 @@ module HostHelpers
       name = HOST_NAME % num
       opts = { :snapshot => HOST_SNAPSHOT % num,
                :ip => HOST_IP % name,
+               :private_ip => HOST_PRIVATE_IP % name,
+               :dns_name => HOST_DNS_NAME % name,
                :template => HOST_TEMPLATE % name,
                :box => HOST_BOX % name,
                :box_url => HOST_BOX_URL % name }.merge( preset_opts )
       hosts << make_host(name, opts)
     end
     hosts
+  end
+
+  def make_instance instance_data = {}
+    OpenStruct.new instance_data
   end
 
 end

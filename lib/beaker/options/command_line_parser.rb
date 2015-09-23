@@ -27,13 +27,6 @@ module Beaker
             @cmd_options[:options_file] =  file
           end
 
-          opts.on '--type TYPE',
-                  'one of git, foss, or pe',
-                  'used to determine underlying path structure of puppet install',
-                  '(default pe)' do |type|
-            @cmd_options[:type] = type
-          end
-
           opts.on '--helper PATH/TO/SCRIPT',
                   'Ruby file evaluated prior to tests',
                   '(a la spec_helper)' do |script|
@@ -64,6 +57,10 @@ module Beaker
                   'Do not provision vm images before testing',
                   '(default: true)' do |bool|
             @cmd_options[:provision] = bool
+            unless bool
+              @cmd_options[:validate]  = false
+              @cmd_options[:configure] = false
+            end
           end
 
           opts.on '--[no-]configure',
@@ -122,6 +119,15 @@ module Beaker
                   'Do not display color in log output',
                   '(default: true)' do |bool|
             @cmd_options[:color] = bool
+          end
+
+          opts.on '--[no-]color-host-output',
+                  'Ensure SUT colored output is preserved',
+                  '(default: false)' do |bool|
+            @cmd_options[:color_host_output] = bool
+            if bool
+              @cmd_options[:color_host_output] = true
+            end
           end
 
           opts.on '--log-level LEVEL',
@@ -189,8 +195,12 @@ module Beaker
             @cmd_options[:validate] = bool
           end
 
+          opts.on '--collect-perf-data', 'Use sysstat on linux hosts to collect performance and load data' do
+            @cmd_options[:collect_perf_data] = true
+          end
+
           opts.on('--version', 'Report currently running version of beaker' ) do
-            @cmd_options[:version] = true
+            @cmd_options[:beaker_version_print] = true
           end
 
           opts.on('--parse-only', 'Display beaker parsed options and exit' ) do
@@ -216,9 +226,25 @@ module Beaker
             #noop
           end
 
-          opts.on '--collect-perf-data', 'Use sysstat on linux hosts to collect performance and load data' do
-            @cmd_options[:collect_perf_data] = true
+          opts.on '--type TYPE',
+                  'DEPRECATED - pe/foss/aio determined during runtime' do |type|
+            #backwards compatability, oh how i hate you
+            @cmd_options[:type] = type
           end
+
+          opts.on '--tag TAGS', 'Run the set of tests matching ALL of the provided single or comma separated list of tags' do |value|
+            @cmd_options[:tag_includes] = value
+          end
+
+          opts.on '--exclude-tag TAGS', 'Run the set of tests that do not contain ANY of the provided single or command separated list of tags' do |value|
+            @cmd_options[:tag_excludes] = value
+          end
+
+          opts.on '--xml-time-order',
+                  'Output an additional JUnit XML file, sorted by execution time' do |bool|
+            @cmd_options[:xml_time_enabled] = bool
+          end
+
         end
 
       end

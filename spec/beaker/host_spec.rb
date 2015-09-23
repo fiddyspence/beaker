@@ -186,7 +186,7 @@ module Beaker
       it "does nothing if the key/value pair already exists" do
         result = Beaker::Result.new(host, '')
         result.exit_code = 0
-        expect( Beaker::Command ).to receive(:new).with("grep KEY=.*\\/my\\/first\\/value ~/.ssh/environment")
+        expect( Beaker::Command ).to receive(:new).with("grep ^KEY=.*\\/my\\/first\\/value ~/.ssh/environment")
         expect( host ).to receive(:exec).once.and_return(result)
 
         host.add_env_var('key', '/my/first/value')
@@ -195,9 +195,9 @@ module Beaker
       it "adds new line to environment file if no env var of that name already exists" do
         result = Beaker::Result.new(host, '')
         result.exit_code = 1
-        expect( Beaker::Command ).to receive(:new).with("grep KEY=.*\\/my\\/first\\/value ~/.ssh/environment")
+        expect( Beaker::Command ).to receive(:new).with("grep ^KEY=.*\\/my\\/first\\/value ~/.ssh/environment")
         expect( host ).to receive(:exec).and_return(result)
-        expect( Beaker::Command ).to receive(:new).with(/grep KEY ~\/\.ssh\/environment/)
+        expect( Beaker::Command ).to receive(:new).with(/grep \^KEY ~\/\.ssh\/environment/)
         expect( host ).to receive(:exec).and_return(result)
         expect( Beaker::Command ).to receive(:new).with("echo \"KEY=/my/first/value\" >> ~/.ssh/environment")
         host.add_env_var('key', '/my/first/value')
@@ -206,13 +206,13 @@ module Beaker
       it "updates existing line in environment file when adding additional value to existing variable" do
         result = Beaker::Result.new(host, '')
         result.exit_code = 1
-        expect( Beaker::Command ).to receive(:new).with("grep KEY=.*\\/my\\/first\\/value ~/.ssh/environment")
+        expect( Beaker::Command ).to receive(:new).with("grep ^KEY=.*\\/my\\/first\\/value ~/.ssh/environment")
         expect( host ).to receive(:exec).and_return(result)
         result = Beaker::Result.new(host, '')
         result.exit_code = 0
-        expect( Beaker::Command ).to receive(:new).with(/grep KEY ~\/\.ssh\/environment/)
+        expect( Beaker::Command ).to receive(:new).with(/grep \^KEY ~\/\.ssh\/environment/)
         expect( host ).to receive(:exec).and_return(result)
-        expect( Beaker::SedCommand ).to receive(:new).with('unix', 's/KEY=/KEY=\\/my\\/first\\/value:/', '~/.ssh/environment')
+        expect( Beaker::SedCommand ).to receive(:new).with('unix', 's/^KEY=/KEY=\\/my\\/first\\/value:/', '~/.ssh/environment')
         host.add_env_var('key', '/my/first/value')
       end
 
@@ -230,7 +230,7 @@ module Beaker
 
     describe "executing commands" do
       let(:command) { Beaker::Command.new('ls') }
-      let(:host) { Beaker::Host.create('host', make_host_opts('host', options.merge(platform))) }
+      let(:host) { Beaker::Host.create('host', {}, make_host_opts('host', options.merge(platform))) }
       let(:result) { Beaker::Result.new(host, 'ls') }
 
       before :each do
@@ -240,9 +240,14 @@ module Beaker
         logger = double(:logger)
         allow( logger ).to receive(:host_output)
         allow( logger ).to receive(:debug)
+        allow( logger ).to receive(:step_in)
+        allow( logger ).to receive(:step_out)
         host.instance_variable_set :@logger, logger
         conn = double(:connection)
         allow( conn ).to receive(:execute).and_return(result)
+        allow( conn ).to receive(:ip).and_return(host['ip'])
+        allow( conn ).to receive(:vmhostname).and_return(host['vmhostname'])
+        allow( conn ).to receive(:hostname).and_return(host.name)
         host.instance_variable_set :@connection, conn
       end
 
@@ -294,6 +299,18 @@ module Beaker
           :acceptable_exit_codes  => [0, 1],
           :accept_all_exit_codes  => true
         }
+        allow( host.logger ).to receive( :warn )
+
+        expect { host.exec(command, opts) }.to_not raise_error
+      end
+
+      it 'sends a warning when both :acceptable_exit_codes & :accept_all_exit_codes are set' do
+        result.exit_code = 7
+        opts = {
+          :acceptable_exit_codes  => [0, 1],
+          :accept_all_exit_codes  => true
+        }
+        expect( host.logger ).to receive( :warn ).with( /overrides/ )
 
         expect { host.exec(command, opts) }.to_not raise_error
       end
@@ -364,6 +381,24 @@ module Beaker
 
       end
 
+    end
+
+    describe "#touch" do
+
+      it "generates the right absolute command for a windows host" do
+        @platform = 'windows'
+        expect( host.touch('touched_file') ).to be == "c:\\\\windows\\\\system32\\\\cmd.exe /c echo. 2> touched_file"
+      end
+
+      it "generates the right absolute command for a unix host" do
+        @platform = 'centos'
+        expect( host.touch('touched_file') ).to be == "/bin/touch touched_file"
+      end
+
+      it "generates the right absolute command for an osx host" do
+        @platform = 'osx'
+        expect( host.touch('touched_file') ).to be == "/usr/bin/touch touched_file"
+      end
 
     end
 
@@ -381,6 +416,9 @@ module Beaker
 
         expect( logger ).to receive(:trace)
         expect( conn ).to receive(:scp_to).with( *conn_args ).and_return(Beaker::Result.new(host, 'output!'))
+        allow( conn ).to receive(:ip).and_return(host['ip'])
+        allow( conn ).to receive(:vmhostname).and_return(host['vmhostname'])
+        allow( conn ).to receive(:hostname).and_return(host.name)
 
         host.do_scp_to *args
       end
@@ -448,6 +486,9 @@ module Beaker
               expect( conn ).to_not receive(:scp_to).with( *conn_args )
             end
           end
+          allow( conn ).to receive(:ip).and_return(host['ip'])
+          allow( conn ).to receive(:vmhostname).and_return(host['vmhostname'])
+          allow( conn ).to receive(:hostname).and_return(host.name)
 
           host.do_scp_to *args
         end
@@ -509,6 +550,9 @@ module Beaker
               expect( conn ).to_not receive(:scp_to).with( *conn_args )
             end
           end
+          allow( conn ).to receive(:ip).and_return(host['ip'])
+          allow( conn ).to receive(:vmhostname).and_return(host['vmhostname'])
+          allow( conn ).to receive(:hostname).and_return(host.name)
 
           host.do_scp_to *args
         end
@@ -537,6 +581,9 @@ module Beaker
             expect( conn ).to receive(:scp_to).with( *conn_args ).and_return(Beaker::Result.new(host, 'output!'))
           end
 
+          allow( conn ).to receive(:ip).and_return(host['ip'])
+          allow( conn ).to receive(:vmhostname).and_return(host['vmhostname'])
+          allow( conn ).to receive(:hostname).and_return(host.name)
           host.do_scp_to *args
         end
       end
@@ -554,6 +601,9 @@ module Beaker
         expect( logger ).to receive(:debug)
         expect( conn ).to receive(:scp_from).with( *conn_args ).and_return(Beaker::Result.new(host, 'output!'))
 
+        allow( conn ).to receive(:ip).and_return(host['ip'])
+        allow( conn ).to receive(:vmhostname).and_return(host['vmhostname'])
+        allow( conn ).to receive(:hostname).and_return(host.name)
         host.do_scp_from *args
       end
     end
@@ -572,17 +622,40 @@ module Beaker
 
         rsync_args = [ 'source', 'target', ['-az', "-e \"ssh -i #{key} -p 22 -o 'StrictHostKeyChecking no'\"", "--exclude '.bundle'"] ]
 
-        expect( host ).to receive(:to_s).and_return('host.example.org')
+        expect( host ).to receive(:reachable_name).and_return('default.ip.address')
 
         expect( Rsync ).to receive(:run).with( *rsync_args ).and_return(Beaker::Result.new(host, 'output!'))
 
         host.do_rsync_to *args
 
-        expect(Rsync.host).to eq('root@host.example.org')
+        expect(Rsync.host).to eq('root@default.ip.address')
       end
 
       it 'throws an IOError when the file given doesn\'t exist' do
         expect { host.do_rsync_to "/does/not/exist", "does/not/exist/over/there", {} }.to raise_error(IOError)
+      end
+
+      it 'uses the ssh config file' do
+        @options = {'ssh' => {:config => '/var/folders/v0/centos-64-x6420150625-48025-lu3u86'}}
+        create_files(['source'])
+        args = [ 'source', 'target',
+                 {:ignore => ['.bundle']} ]
+        # since were using fakefs we need to create the file and directories
+        FileUtils.mkdir_p('/var/folders/v0/')
+        FileUtils.touch('/var/folders/v0/centos-64-x6420150625-48025-lu3u86')
+        rsync_args = [ 'source', 'target', ['-az', "-e \"ssh -F /var/folders/v0/centos-64-x6420150625-48025-lu3u86 -o 'StrictHostKeyChecking no'\"", "--exclude '.bundle'"] ]
+        expect(Rsync).to receive(:run).with(*rsync_args).and_return(Beaker::Result.new(host, 'output!'))
+        expect(host.do_rsync_to(*args).cmd).to eq('output!')
+      end
+
+      it 'does not use the ssh config file when config does not exist' do
+        @options = {'ssh' => {:config => '/var/folders/v0/centos-64-x6420150625-48025-lu3u86'}}
+        create_files(['source'])
+        args = [ 'source', 'target',
+                 {:ignore => ['.bundle']} ]
+        rsync_args = [ 'source', 'target', ['-az', "-e \"ssh -o 'StrictHostKeyChecking no'\"", "--exclude '.bundle'"] ]
+        expect(Rsync).to receive(:run).with(*rsync_args).and_return(Beaker::Result.new(host, 'output!'))
+        expect(host.do_rsync_to(*args).cmd).to eq('output!')
       end
     end
 
@@ -590,56 +663,18 @@ module Beaker
       expect( "#{host}" ).to be === 'name'
     end
 
-    context 'merging defaults' do
-      it 'knows the difference between foss and pe' do
-        @options = { :type => 'pe' }
-        expect( host['puppetpath'] ).to be === '/etc/puppetlabs/puppet'
+    describe 'host close' do
+      context 'with a nil connection object' do
+        before do
+          conn = nil
+          host.instance_variable_set :@connection, conn
+          allow(host).to receive(:close).and_call_original
+        end
+        it 'does not raise an error' do
+          expect { host.close }.to_not raise_error
+        end
       end
-
     end
 
-    context 'deprecating host keys' do
-
-      describe '#build_deprecated_keys' do
-
-        it 'returns the correct array for a unix host' do
-          expect( host.build_deprecated_keys().include?(:puppetvardir) ).to be_truthy
-        end
-
-        it 'returns the correct array for a windows host' do
-          @platform = 'windows-xp-me-bla'
-          expect( host.build_deprecated_keys().include?(:hieraconf) ).to be_truthy
-        end
-
-        it 'can be called on an unsupported host type without an error being thrown' do
-          @options = { :is_cygwin => false }
-          @platform = 'windows-stuff-stuff'
-          expect{ host.build_deprecated_keys() }.not_to raise_error
-          expect( host.build_deprecated_keys().empty? ).to be_truthy
-        end
-
-        it 'returns an empty array for unsupported host types' do
-          @options = { :is_cygwin => false }
-          @platform = 'windows-stuff-stuff'
-          expect( host.build_deprecated_keys().empty? ).to be_truthy
-        end
-
-      end
-
-      describe '#[]' do
-
-        it 'does not log for a key that isn\'t deprecated' do
-          expect( host ).to receive( :@logger ).exactly(0).times
-          host['puppetbindir']
-        end
-
-        it 'logs the warning message for a deprecated key' do
-          expect( host.instance_variable_get(:@logger) ).to receive( :warn ).once
-          host['hierapuppetlibdir']
-        end
-
-      end
-
-    end
   end
 end

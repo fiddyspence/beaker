@@ -12,7 +12,7 @@ module Beaker
         #     (or range) of integer exit codes that should be considered
         #     acceptable.  An error will be thrown if the exit code does not
         #     match one of the values in this list.
-        #   @option opts [Boolean] :accept_all_exit_codes (false) Consider all 
+        #   @option opts [Boolean] :accept_all_exit_codes (false) Consider all
         #     exit codes as passing.
         #   @option opts [Boolean] :dry_run (false) Do not actually execute any
         #     commands on the SUT
@@ -331,7 +331,7 @@ module Beaker
         #
         # @return nil
         def add_system32_hosts_entry(host, opts = {})
-          if host['platform'] =~ /windows/
+          if host.is_powershell?
             hosts_file = "C:\\Windows\\System32\\Drivers\\etc\\hosts"
             host_entry = "#{opts['ip']}`t`t#{opts['name']}"
             on host, powershell("\$text = \\\"#{host_entry}\\\"; Add-Content -path '#{hosts_file}' -value \$text")
@@ -374,11 +374,7 @@ module Beaker
         # @!macro common_opts
         #
         def curl_on(host, cmd, opts = {}, &block)
-          if options.is_pe? #check global options hash
-            on host, "curl --tlsv1 %s" % cmd, opts, &block
-          else
-            on host, "curl %s" % cmd, opts, &block
-          end
+          on host, "curl --tlsv1 %s" % cmd, opts, &block
         end
 
 
@@ -504,6 +500,22 @@ module Beaker
               dir
             else
               raise "Host platform not supported by `create_tmpdir_on`."
+            end
+          end
+        end
+
+        # 'echo' the provided value on the given host(s)
+        # @param [Host, Array<Host>, String, Symbol] hosts    One or more hosts to act upon,
+        #                            or a role (String or Symbol) that identifies one or more hosts.
+        # @param [String] val The string to 'echo' on the host(s)
+        # @return [String, Array<String> The echo'ed value(s) returned by the host(s)
+        def echo_on hosts, val
+          #val = val.gsub(/"/, "\"").gsub(/\(/, "\(")
+          block_on hosts do |host|
+            if host.is_powershell?
+              host.exec(Command.new("echo #{val}")).stdout.chomp
+            else
+              host.exec(Command.new("echo \"#{val}\"")).stdout.chomp
             end
           end
         end

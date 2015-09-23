@@ -33,11 +33,17 @@ Gem::Specification.new do |s|
   # Run time dependencies
   s.add_runtime_dependency 'minitest', '~> 5.4'
   s.add_runtime_dependency 'json', '~> 1.8'
-  s.add_runtime_dependency 'hocon', '~> 0.0.4'
+  s.add_runtime_dependency 'hocon', '~> 0.1'
   s.add_runtime_dependency 'net-ssh', '~> 2.9'
   s.add_runtime_dependency 'net-scp', '~> 1.2'
   s.add_runtime_dependency 'inifile', '~> 2.0'
   s.add_runtime_dependency 'rsync', '~> 1.0.9'
+  s.add_runtime_dependency 'open_uri_redirections', '~> 0.2.1'
+
+  # Run time dependencies that are Beaker libraries
+  s.add_runtime_dependency 'beaker-answers', '~> 0.0'
+  s.add_runtime_dependency 'stringify-hash', '~> 0.0'
+  s.add_runtime_dependency 'beaker-hiera', '~> 0.0'
 
   # Optional provisioner specific support
   s.add_runtime_dependency 'rbvmomi', '~> 1.8'

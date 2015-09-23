@@ -8,6 +8,8 @@ class ClassMixedWithDSLInstallUtils
   include Beaker::DSL::Roles
   include Beaker::DSL::Patterns
 
+  attr_accessor :hosts
+
   def logger
     @logger ||= RSpec::Mocks::Double.new('logger').as_null_object
   end
@@ -17,8 +19,9 @@ describe ClassMixedWithDSLInstallUtils do
   let(:presets)       { Beaker::Options::Presets.new }
   let(:opts)          { presets.presets.merge(presets.env_vars) }
   let(:basic_hosts)   { make_hosts( { :pe_ver => '3.0',
-                                       :platform => 'linux',
-                                       :roles => [ 'agent' ] }, 4 ) }
+                                      :platform => 'linux',
+                                      :roles => [ 'agent' ],
+                                      :type => 'pe'}, 4 ) }
   let(:hosts)         { basic_hosts[0][:roles] = ['master', 'database', 'dashboard']
                         basic_hosts[1][:platform] = 'windows'
                         basic_hosts[2][:platform] = 'osx-10.9-x86_64'
@@ -27,18 +30,89 @@ describe ClassMixedWithDSLInstallUtils do
   let(:hosts_sorted)  { [ hosts[1], hosts[0], hosts[2], hosts[3] ] }
   let(:winhost)       { make_host( 'winhost', { :platform => 'windows',
                                                 :pe_ver => '3.0',
+                                                :type => 'pe',
                                                 :working_dir => '/tmp' } ) }
   let(:machost)       { make_host( 'machost', { :platform => 'osx-10.9-x86_64',
                                                 :pe_ver => '3.0',
+                                                :type => 'pe',
                                                 :working_dir => '/tmp' } ) }
   let(:unixhost)      { make_host( 'unixhost', { :platform => 'linux',
                                                  :pe_ver => '3.0',
+                                                :type => 'pe',
                                                  :working_dir => '/tmp',
                                                  :dist => 'puppet-enterprise-3.1.0-rc0-230-g36c9e5c-debian-7-i386' } ) }
   let(:eoshost)       { make_host( 'eoshost', { :platform => 'eos',
                                                 :pe_ver => '3.0',
+                                                :type => 'pe',
                                                 :working_dir => '/tmp',
                                                 :dist => 'puppet-enterprise-3.7.1-rc0-78-gffc958f-eos-4-i386' } ) }
+  context '#configure_pe_defaults_on' do
+    it 'uses aio paths for hosts of role aio' do
+      hosts.each do |host|
+        host[:roles] = host[:roles] | ['aio']
+      end
+      expect(subject).to receive(:add_pe_defaults_on).exactly(hosts.length).times
+      expect(subject).to receive(:add_aio_defaults_on).exactly(hosts.length).times
+      expect(subject).to receive(:add_puppet_paths_on).exactly(hosts.length).times
+
+      subject.configure_pe_defaults_on( hosts )
+    end
+
+    it 'uses pe paths for hosts of type pe' do
+      hosts.each do |host|
+        host[:type] = 'pe'
+      end
+      expect(subject).to receive(:add_pe_defaults_on).exactly(hosts.length).times
+      expect(subject).to receive(:add_aio_defaults_on).never
+      expect(subject).to receive(:add_puppet_paths_on).exactly(hosts.length).times
+
+      subject.configure_pe_defaults_on( hosts )
+    end
+
+    it 'uses aio paths for hosts of type aio' do
+      hosts.each do |host|
+        host[:type] = 'aio'
+      end
+      expect(subject).to receive(:add_aio_defaults_on).exactly(hosts.length).times
+      expect(subject).to receive(:add_puppet_paths_on).exactly(hosts.length).times
+
+      subject.configure_pe_defaults_on( hosts )
+    end
+
+    it 'uses no paths for hosts with no type' do
+      hosts.each do |host|
+        host[:type] = nil
+      end
+      expect(subject).to receive(:add_pe_defaults_on).never
+      expect(subject).to receive(:add_aio_defaults_on).never
+      expect(subject).to receive(:add_puppet_paths_on).never
+
+      subject.configure_pe_defaults_on( hosts )
+    end
+
+    it 'uses aio paths for hosts of version >= 4.0' do
+      hosts.each do |host|
+        host[:pe_ver] = '4.0'
+        end
+      expect(subject).to receive(:add_pe_defaults_on).exactly(hosts.length).times
+      expect(subject).to receive(:add_aio_defaults_on).exactly(hosts.length).times
+      expect(subject).to receive(:add_puppet_paths_on).exactly(hosts.length).times
+
+      subject.configure_pe_defaults_on( hosts )
+    end
+
+    it 'uses pe paths for hosts of version < 4.0' do
+      hosts.each do |host|
+        host[:pe_ver] = '3.8'
+      end
+      expect(subject).to receive(:add_pe_defaults_on).exactly(hosts.length).times
+      expect(subject).to receive(:add_aio_defaults_on).never
+      expect(subject).to receive(:add_puppet_paths_on).exactly(hosts.length).times
+
+      subject.configure_pe_defaults_on( hosts )
+    end
+
+  end
 
   describe 'sorted_hosts' do
     it 'can reorder so that the master comes first' do
@@ -60,13 +134,6 @@ describe ClassMixedWithDSLInstallUtils do
   end
 
   describe 'installer_cmd' do
-
-    it 'generates a windows PE install command for a windows host' do
-      winhost['dist'] = 'puppet-enterprise-3.0'
-      allow( subject ).to receive( :hosts ).and_return( [ hosts[1], hosts[0], hosts[2], winhost ] )
-      allow( winhost ).to receive( :is_cygwin?).and_return(true)
-      expect( subject.installer_cmd( winhost, {} ) ).to be === "cd /tmp && cmd /C 'start /w msiexec.exe /qn /L*V tmp.log /i puppet-enterprise-3.0.msi PUPPET_MASTER_SERVER=vm1 PUPPET_AGENT_CERTNAME=winhost'"
-    end
 
     it 'generates a unix PE install command for a unix host' do
       the_host = unixhost.dup
@@ -283,10 +350,12 @@ describe ClassMixedWithDSLInstallUtils do
       allow( subject ).to receive( :sign_certificate_for ).and_return( true )
       allow( subject ).to receive( :stop_agent_on ).and_return( true )
       allow( subject ).to receive( :sleep_until_puppetdb_started ).and_return( true )
+      allow( subject ).to receive( :max_version ).with(anything, '3.8').and_return('3.0')
       allow( subject ).to receive( :version_is_less ).with('3.0', '4.0').and_return( true )
       allow( subject ).to receive( :version_is_less ).with('3.0', '3.4').and_return( true )
       allow( subject ).to receive( :version_is_less ).with('3.0', '3.0').and_return( false )
       allow( subject ).to receive( :version_is_less ).with('3.0', '3.99').and_return( true )
+      allow( subject ).to receive( :version_is_less ).with('3.99', '3.0').and_return( false )
       allow( subject ).to receive( :wait_for_host_in_dashboard ).and_return( true )
       allow( subject ).to receive( :puppet_agent ) do |arg|
         "puppet agent #{arg}"
@@ -300,7 +369,9 @@ describe ClassMixedWithDSLInstallUtils do
       expect( subject ).to receive( :create_remote_file ).with( hosts[0], /answers/, /q/ ).once
       #run installer on all hosts
       expect( subject ).to receive( :on ).with( hosts[0], /puppet-enterprise-installer/ ).once
-      expect( subject ).to receive( :on ).with( hosts[1], /msiexec.exe/ ).once
+      expect( subject ).to receive( :install_msi_on ).with ( any_args ) do | host, msi_path, msi_opts, opts |
+        expect( host ).to eq( hosts[1] )
+      end.once
       expect( subject ).to receive( :on ).with( hosts[2], / hdiutil attach puppet-enterprise-3.0-osx-10.9-x86_64.dmg && installer -pkg \/Volumes\/puppet-enterprise-3.0\/puppet-enterprise-installer-3.0.pkg -target \// ).once
       expect( subject ).to receive( :on ).with( hosts[3], /^Cli/ ).once
       #does extra mac/EOS specific commands
@@ -328,6 +399,7 @@ describe ClassMixedWithDSLInstallUtils do
       expect( subject ).to receive( :on ).with( hosts[2], /puppet agent -t/, :acceptable_exit_codes => [0,2] ).once
       expect( subject ).to receive( :on ).with( hosts[3], /puppet agent -t/, :acceptable_exit_codes => [0,2] ).once
       #run rake task on dashboard
+
       expect( subject ).to receive( :on ).with( hosts[0], /\/opt\/puppet\/bin\/rake -sf \/opt\/puppet\/share\/puppet-dashboard\/Rakefile .* RAILS_ENV=production/ ).once
       #wait for all hosts to appear in the dashboard
       #run puppet agent now that installation is complete
@@ -340,14 +412,17 @@ describe ClassMixedWithDSLInstallUtils do
         :pe_ver => '3.0',
         :roles => ['agent']
       }, 1)
+      opts[:masterless] = true
 
       allow( subject ).to receive( :hosts ).and_return( hosts )
-      allow( subject ).to receive( :options ).and_return({ :masterless => true })
       allow( subject ).to receive( :on ).and_return( Beaker::Result.new( {}, '' ) )
       allow( subject ).to receive( :fetch_pe ).and_return( true )
       allow( subject ).to receive( :create_remote_file ).and_return( true )
       allow( subject ).to receive( :stop_agent_on ).and_return( true )
+      allow( subject ).to receive( :max_version ).with(['3.0'], '3.8').and_return('3.0')
+      allow( subject ).to receive( :version_is_less ).with('3.99', '3.0').and_return( false )
       allow( subject ).to receive( :version_is_less ).with(anything, '3.2.0').exactly(hosts.length + 1).times.and_return( false )
+      allow( subject ).to receive( :version_is_less ).with(anything, '4.0').exactly(hosts.length + 1).times.and_return( true )
 
       expect( subject ).to receive( :on ).with( hosts[0], /puppet-enterprise-installer/ ).once
       expect( subject ).to receive( :create_remote_file ).with( hosts[0], /answers/, /q/ ).once
@@ -358,6 +433,172 @@ describe ClassMixedWithDSLInstallUtils do
       expect( subject ).to_not receive( :on ).with( hosts[0], /puppet agent -t/, :acceptable_exit_codes => [0,2] )
       subject.do_install( hosts, opts)
     end
+
+    it 'can perform a 4+ installation using AIO agents' do
+      hosts = make_hosts({
+        :pe_ver => '4.0',
+        :roles => ['agent'],
+      }, 3)
+      hosts[0][:roles] = ['master', 'database', 'dashboard']
+      hosts[1][:platform] = 'windows'
+      hosts[2][:platform] = Beaker::Platform.new('el-6-x86_64')
+
+      allow( subject ).to receive( :hosts ).and_return( hosts )
+      allow( subject ).to receive( :options ).and_return(Beaker::Options::Presets.new.presets)
+      allow( subject ).to receive( :on ).and_return( Beaker::Result.new( {}, '' ) )
+      allow( subject ).to receive( :fetch_pe ).and_return( true )
+      allow( subject ).to receive( :create_remote_file ).and_return( true )
+      allow( subject ).to receive( :sign_certificate_for ).and_return( true )
+      allow( subject ).to receive( :stop_agent_on ).and_return( true )
+      allow( subject ).to receive( :sleep_until_puppetdb_started ).and_return( true )
+      allow( subject ).to receive( :max_version ).with(anything, '3.8').and_return('4.0')
+      allow( subject ).to receive( :version_is_less ).with('4.0', '4.0').and_return( false )
+      allow( subject ).to receive( :version_is_less ).with('4.0', '3.4').and_return( false )
+      allow( subject ).to receive( :version_is_less ).with('4.0', '3.0').and_return( false )
+      allow( subject ).to receive( :version_is_less ).with('3.99', '4.0').and_return( true )
+      # pe_ver is only set on the hosts for this test, not the opt
+      allow( subject ).to receive( :version_is_less ).with('4.0', '3.99').and_return( true )
+      allow( subject ).to receive( :wait_for_host_in_dashboard ).and_return( true )
+      allow( subject ).to receive( :puppet_agent ) do |arg|
+        "puppet agent #{arg}"
+      end
+      allow( subject ).to receive( :puppet ) do |arg|
+        "puppet #{arg}"
+      end
+
+      allow( subject ).to receive( :hosts ).and_return( hosts )
+      #create answers file per-host, except windows
+      expect( subject ).to receive( :create_remote_file ).with( hosts[0], /answers/, /q/ ).once
+      #run installer on all hosts
+      expect( subject ).to receive( :on ).with( hosts[0], /puppet-enterprise-installer/ ).once
+      expect( subject ).to receive( :install_puppet_agent_pe_promoted_repo_on ).with( hosts[1],
+                                                                                     {:puppet_agent_version=>nil, :puppet_agent_sha=>nil, :pe_ver=>hosts[1][:pe_ver], :puppet_collection=>nil} ).once
+      expect( subject ).to receive( :install_puppet_agent_pe_promoted_repo_on ).with( hosts[2],
+                                                                                     {:puppet_agent_version=>nil, :puppet_agent_sha=>nil, :pe_ver=>hosts[2][:pe_ver], :puppet_collection=>nil} ).once
+      hosts.each do |host|
+        expect( subject ).to receive( :configure_type_defaults_on ).with( host ).once
+        expect( subject ).to receive( :sign_certificate_for ).with( host ).once
+        expect( subject ).to receive( :stop_agent_on ).with( host ).once
+        expect( subject ).to receive( :on ).with( host, /puppet agent -t/, :acceptable_exit_codes => [0,2] ).once
+      end
+      #wait for puppetdb to start
+      expect( subject ).to receive( :sleep_until_puppetdb_started ).with( hosts[0] ).once#wait for all hosts to appear in the dashboard
+      #run puppet agent now that installation is complete
+      expect( subject ).to receive( :on ).with( hosts, /puppet agent/, :acceptable_exit_codes => [0,2] ).once
+      subject.do_install( hosts, opts )
+    end
+
+    it 'can perform a 4/3 mixed installation with AIO and -non agents' do
+      hosts = make_hosts({
+                           :pe_ver => '4.0',
+                           :roles => ['agent'],
+                         }, 3)
+      hosts[0][:roles] = ['master', 'database', 'dashboard']
+      hosts[1][:platform] = 'windows'
+      hosts[2][:platform] = Beaker::Platform.new('el-6-x86_64')
+      hosts[2][:pe_ver]   = '3.8'
+
+      allow( subject ).to receive( :hosts ).and_return( hosts )
+      allow( subject ).to receive( :options ).and_return(Beaker::Options::Presets.new.presets)
+      allow( subject ).to receive( :on ).and_return( Beaker::Result.new( {}, '' ) )
+      allow( subject ).to receive( :fetch_pe ).and_return( true )
+      allow( subject ).to receive( :create_remote_file ).and_return( true )
+      allow( subject ).to receive( :sign_certificate_for ).and_return( true )
+      allow( subject ).to receive( :stop_agent_on ).and_return( true )
+      allow( subject ).to receive( :sleep_until_puppetdb_started ).and_return( true )
+      allow( subject ).to receive( :max_version ).with(anything, '3.8').and_return('4.0')
+      allow( subject ).to receive( :version_is_less ).with('4.0', '4.0').and_return( false )
+      allow( subject ).to receive( :version_is_less ).with('4.0', '3.4').and_return( false )
+      allow( subject ).to receive( :version_is_less ).with('4.0', '3.0').and_return( false )
+      allow( subject ).to receive( :version_is_less ).with('3.99', '4.0').and_return( true )
+      allow( subject ).to receive( :version_is_less ).with('3.8', '4.0').and_return( true )
+      # pe_ver is only set on the hosts for this test, not the opt
+      allow( subject ).to receive( :version_is_less ).with('4.0', '3.99').and_return( true )
+      allow( subject ).to receive( :wait_for_host_in_dashboard ).and_return( true )
+      allow( subject ).to receive( :puppet_agent ) do |arg|
+        "puppet agent #{arg}"
+      end
+      allow( subject ).to receive( :puppet ) do |arg|
+        "puppet #{arg}"
+      end
+
+      allow( subject ).to receive( :hosts ).and_return( hosts )
+      #create answers file per-host, except windows
+      expect( subject ).to receive( :create_remote_file ).with( hosts[0], /answers/, /q/ ).once
+      #run installer on all hosts
+      expect( subject ).to receive( :on ).with( hosts[0], /puppet-enterprise-installer/ ).once
+      expect( subject ).to receive( :install_puppet_agent_pe_promoted_repo_on ).with( hosts[1],
+                                                                                      {:puppet_agent_version=>nil, :puppet_agent_sha=>nil, :pe_ver=>hosts[1][:pe_ver], :puppet_collection=>nil} ).once
+      expect( subject ).to receive( :on ).with( hosts[2], /puppet-enterprise-installer/ ).once
+      hosts.each do |host|
+        expect( subject ).to receive( :configure_type_defaults_on ).with( host ).once
+        expect( subject ).to receive( :sign_certificate_for ).with( host ).once
+        expect( subject ).to receive( :stop_agent_on ).with( host ).once
+        expect( subject ).to receive( :on ).with( host, /puppet agent -t/, :acceptable_exit_codes => [0,2] ).once
+      end
+      #wait for puppetdb to start
+      expect( subject ).to receive( :sleep_until_puppetdb_started ).with( hosts[0] ).once#wait for all hosts to appear in the dashboard
+      #run puppet agent now that installation is complete
+      expect( subject ).to receive( :on ).with( hosts, /puppet agent/, :acceptable_exit_codes => [0,2] ).once
+      subject.do_install( hosts, opts )
+    end
+
+    it 'sets puppet-agent acceptable_exit_codes correctly for config helper on upgrade' do
+      hosts = make_hosts({
+                           :pe_ver => '4.0',
+                           :roles => ['agent'],
+                         }, 2)
+      hosts[0][:roles] = ['master', 'database', 'dashboard']
+      hosts[1][:platform] = Beaker::Platform.new('el-6-x86_64')
+
+      allow( subject ).to receive( :hosts ).and_return( hosts )
+      allow( subject ).to receive( :options ).and_return(Beaker::Options::Presets.new.presets)
+      allow( subject ).to receive( :on ).and_return( Beaker::Result.new( {}, '' ) )
+      allow( subject ).to receive( :fetch_pe ).and_return( true )
+      allow( subject ).to receive( :create_remote_file ).and_return( true )
+      allow( subject ).to receive( :sign_certificate_for ).and_return( true )
+      allow( subject ).to receive( :stop_agent_on ).and_return( true )
+      allow( subject ).to receive( :sleep_until_puppetdb_started ).and_return( true )
+      allow( subject ).to receive( :max_version ).with(anything, '3.8').and_return('4.0')
+      allow( subject ).to receive( :version_is_less ).with('4.0', '4.0').and_return( false )
+      allow( subject ).to receive( :version_is_less ).with('4.0', '3.4').and_return( false )
+      allow( subject ).to receive( :version_is_less ).with('4.0', '3.0').and_return( false )
+      allow( subject ).to receive( :version_is_less ).with('3.99', '4.0').and_return( true )
+      allow( subject ).to receive( :version_is_less ).with('3.8', '4.0').and_return( true )
+      # pe_ver is only set on the hosts for this test, not the opt
+      allow( subject ).to receive( :version_is_less ).with('4.0', '3.99').and_return( true )
+      allow( subject ).to receive( :wait_for_host_in_dashboard ).and_return( true )
+      allow( subject ).to receive( :puppet_agent ) do |arg|
+        "puppet agent #{arg}"
+      end
+      allow( subject ).to receive( :puppet ) do |arg|
+        "puppet #{arg}"
+      end
+
+      allow( subject ).to receive( :hosts ).and_return( hosts )
+      #create answers file per-host, except windows
+      allow( subject ).to receive( :create_remote_file ).with( hosts[0], /answers/, /q/ )
+      #run installer on all hosts
+      allow( subject ).to receive( :on ).with( hosts[0], /puppet-enterprise-installer/ )
+      allow( subject ).to receive( :install_puppet_agent_pe_promoted_repo_on ).with( hosts[1],
+                                                                                      {:puppet_agent_version=>nil, :puppet_agent_sha=>nil, :pe_ver=>hosts[1][:pe_ver], :puppet_collection=>nil} )
+      # expect( subject ).to receive( :on ).with( hosts[2], /puppet-enterprise-installer/ ).once
+      hosts.each do |host|
+        allow( subject ).to receive( :add_pe_defaults_on ).with( host ) unless subject.aio_version?(host)
+        allow( subject ).to receive( :sign_certificate_for ).with( host )
+        allow( subject ).to receive( :stop_agent_on ).with( host )
+        allow( subject ).to receive( :on ).with( host, /puppet agent -t/, :acceptable_exit_codes => [0,2] )
+      end
+      #wait for puppetdb to start
+      allow( subject ).to receive( :sleep_until_puppetdb_started ).with( hosts[0] ) #wait for all hosts to appear in the dashboard
+      #run puppet agent now that installation is complete
+      allow( subject ).to receive( :on ).with( hosts, /puppet agent/, :acceptable_exit_codes => [0,2] )
+
+      opts[:type] = :upgrade
+      expect( subject ).to receive( :setup_defaults_and_config_helper_on ).with( hosts[1], hosts[0], [0, 1, 2] )
+      subject.do_install( hosts, opts )
+    end
+
   end
 
   describe 'do_higgs_install' do
@@ -405,7 +646,7 @@ describe ClassMixedWithDSLInstallUtils do
                                         opts ).once
       #check to see if the higgs installation has proceeded correctly, works on second check
       expect( subject ).to receive( :on ).with( hosts[0], /cat #{hosts[0]['higgs_file']}/, { :accept_all_exit_codes => true }).exactly(10).times.and_return( @fail_result )
-      expect{ subject.do_higgs_install( hosts[0], opts ) }.to raise_error
+      expect{ subject.do_higgs_install( hosts[0], opts ) }.to raise_error RuntimeError, "Failed to kick off PE (Higgs) web installation"
     end
 
   end
@@ -433,6 +674,13 @@ describe ClassMixedWithDSLInstallUtils do
       hosts.each do |h|
         expect( h['pe_ver'] ).to be === '2.8'
       end
+    end
+
+    it 'can act upon a single host' do
+      allow( subject ).to receive( :hosts ).and_return( hosts )
+      allow( subject ).to receive( :sorted_hosts ).and_return( [hosts[0]] )
+      expect( subject ).to receive( :do_install ).with( [hosts[0]], {} )
+      subject.install_pe_on(hosts[0], {})
     end
   end
 
@@ -503,6 +751,19 @@ describe ClassMixedWithDSLInstallUtils do
       end
     end
 
+    it 'can act upon a single host' do
+      allow( Beaker::Options::PEVersionScraper ).to receive( :load_pe_version ).and_return( '3.1' )
+      allow( Beaker::Options::PEVersionScraper ).to receive( :load_pe_version_win ).and_return( '3.1' )
+      allow( subject ).to receive( :hosts ).and_return( hosts )
+      allow( subject ).to receive( :version_is_less ).with('3.0', '3.4.0').and_return( true )
+      allow( subject ).to receive( :version_is_less ).with('3.1', '3.0').and_return( false )
+      allow( subject ).to receive( :sorted_hosts ).and_return( [hosts[0]] )
+      version = version_win = '3.1'
+      path = "/path/to/upgradepkg"
+      expect( subject ).to receive( :do_install ).with( [hosts[0]], {:type=>:upgrade, :set_console_password=>true} )
+      subject.upgrade_pe_on(hosts[0], {}, path)
+    end
+
   end
 
   describe 'fetch_and_push_pe' do
@@ -538,6 +799,89 @@ describe ClassMixedWithDSLInstallUtils do
       subject.fetch_and_push_pe(unixhost, path, filename, extension)
     end
 
+  end
+
+  describe 'create_agent_specified_arrays' do
+    let(:master)        { make_host( 'master',       { :platform => 'linux',
+                                                       :pe_ver   => '4.0',
+                                                       :roles => ['master', 'agent']})}
+    let(:db)            { make_host( 'db',           { :platform => 'linux',
+                                                       :pe_ver   => '4.0',
+                                                       :roles => ['database', 'agent']})}
+    let(:console)       { make_host( 'console',      { :platform => 'linux',
+                                                       :pe_ver   => '4.0',
+                                                       :roles => ['dashboard', 'agent']})}
+    let(:monolith)      { make_host( 'monolith',     { :platform => 'linux',
+                                                       :pe_ver   => '4.0',
+                                                       :roles => %w(master dashboard database)})}
+    let(:frictionless)  { make_host( 'frictionless', { :platform => 'linux',
+                                                       :pe_ver   => '4.0',
+                                                       :roles => ['agent', 'frictionless']})}
+    let(:agent1)        { make_host( 'agent1',       { :platform => 'linux',
+                                                       :pe_ver   => '4.0',
+                                                       :roles => ['agent']})}
+    let(:agent2)        { make_host( 'agent2',       { :platform => 'linux',
+                                                       :pe_ver   => '4.0',
+                                                       :roles => ['agent']})}
+    let(:default_agent) { make_host( 'default',      { :platform => 'linux',
+                                                       :pe_ver   => '4.0',
+                                                       :roles => ['default', 'agent']})}
+    let(:masterless)    { make_host( 'masterless',   { :platform => 'linux',
+                                                       :pe_ver   => '4.0',
+                                                       :roles => ['agent', 'masterless']})}
+    let(:compiler)      { make_host( 'compiler',     { :platform => 'linux',
+                                                       :pe_ver   => '4.0',
+                                                       :roles => ['agent', 'compile_master']})}
+
+    it 'sorts hosts with common PE roles' do
+      these_hosts = [master, db, console, agent1, frictionless]
+      agent_only, non_agent = subject.create_agent_specified_arrays(these_hosts)
+      expect(agent_only.length).to be 1
+      expect(agent_only).to include(agent1)
+      expect(non_agent.length).to be 4
+      expect(non_agent).to include(master)
+      expect(non_agent).to include(db)
+      expect(non_agent).to include(console)
+      expect(non_agent).to include(frictionless)
+    end
+
+    # Possibly needed for NetDev and Scale testing
+    it 'defaults to classifying custom roles as "agent only"' do
+      these_hosts = [monolith, compiler, agent1, agent2]
+      agent_only, non_agent = subject.create_agent_specified_arrays(these_hosts)
+      expect(agent_only.length).to be 3
+      expect(agent_only).to include(agent1)
+      expect(agent_only).to include(agent2)
+      expect(agent_only).to include(compiler)
+      expect(non_agent.length).to be 1
+      expect(non_agent).to include(monolith)
+    end
+
+    # Most common form of module testing
+    it 'allows a puppet-agent host to be the default test target' do
+      these_hosts = [monolith, default_agent]
+      agent_only, non_agent = subject.create_agent_specified_arrays(these_hosts)
+      expect(agent_only.length).to be 1
+      expect(agent_only).to include(default_agent)
+      expect(non_agent.length).to be 1
+      expect(non_agent).to include(monolith)
+    end
+
+    # Preferred module on commit scenario
+    it 'handles masterless scenarios' do
+      these_hosts = [masterless]
+      agent_only, non_agent = subject.create_agent_specified_arrays(these_hosts)
+      expect(agent_only.length).to be 1
+      expect(non_agent).to be_empty
+    end
+
+    # IIRC, this is the basic PE integration smoke test
+    it 'handles agent-only-less scenarios' do
+      these_hosts = [monolith, frictionless]
+      agent_only, non_agent = subject.create_agent_specified_arrays(these_hosts)
+      expect(agent_only).to be_empty
+      expect(non_agent.length).to be 2
+    end
   end
 
 end

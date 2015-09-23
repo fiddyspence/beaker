@@ -24,6 +24,27 @@ module Beaker
         expect(tfs).to include rb_test
       end
 
+      it 'defaults to :slow fail_mode if not provided through parameter or options' do
+        @files = [ rb_test ]
+        ts = Beaker::TestSuite.new('name', 'hosts', options, Time.now)
+        tfm = ts.instance_variable_get(:@fail_mode)
+        expect(tfm).to be == :slow
+      end
+
+      it 'uses provided parameter fail_mode' do
+        @files = [ rb_test ]
+        ts = Beaker::TestSuite.new('name', 'hosts', options, Time.now, :fast)
+        tfm = ts.instance_variable_get(:@fail_mode)
+        expect(tfm).to be == :fast
+      end
+
+      it 'uses options fail_mode if fail_mode parameter is not provided' do
+        @files = [ rb_test ]
+        options[:fail_mode] = :fast
+        ts = Beaker::TestSuite.new('name', 'hosts', options, Time.now)
+        tfm = ts.instance_variable_get(:@fail_mode)
+        expect(tfm).to be == :fast
+      end
     end
 
     context 'run' do
@@ -203,6 +224,43 @@ module Beaker
         test_suite_result.add_test_case( testcase2 )
         test_suite_result.add_test_case( testcase3 )
         expect( test_suite_result.elapsed_time ).to be == 111
+      end
+
+      describe '#write_junit_xml' do
+        let( :options )     { make_opts.merge({ :logger => double().as_null_object, 'name' => create_files(@files), :log_dated_dir => '.', :xml_dated_dir => '.'}) }
+        let(:rb_test)       { 'my_ruby_file.rb'     }
+
+        it 'doesn\'t re-order test cases themselves on time_sort' do
+          nokogiri_mock = Hash.new
+          allow( nokogiri_mock ).to receive( :add_child )
+          allow( Nokogiri::XML::Node ).to receive( :new ) { nokogiri_mock }
+          allow( LoggerJunit ).to receive( :write_xml ).and_yield( Object.new, nokogiri_mock )
+
+          @files = [ rb_test, rb_test, rb_test]
+          ts = Beaker::TestSuite.new( 'name', hosts, options, Time.now, :fast )
+          tsr = ts.instance_variable_get( :@test_suite_results )
+
+          allow( tsr ).to receive( :start_time ).and_return(0)
+          allow( tsr ).to receive( :stop_time ).and_return(10)
+          expect( tsr.instance_variable_get( :@logger ) ).to receive( :error ).never
+
+          test_cases = []
+          3.times do
+            tc = Beaker::TestCase.new( hosts, options[:logger], options, rb_test)
+            allow( tc ).to receive( :sublog ).and_return( false )
+            test_cases << tc
+          end
+          test_cases[0].instance_variable_set(:@runtime, 3)
+          test_cases[1].instance_variable_set(:@runtime, 301)
+          test_cases[2].instance_variable_set(:@runtime, 101)
+          test_cases.map { |tc| tsr.add_test_case( tc ) }
+
+          original_testcase_order = test_suite_result.instance_variable_get( :@test_cases ).dup
+          tsr.write_junit_xml( 'fakeFilePath07', 'fakeFileToLink09', true )
+          after_testcase_order = test_suite_result.instance_variable_get( :@test_cases ).dup
+          expect( after_testcase_order ).to be === original_testcase_order
+        end
+
       end
 
 

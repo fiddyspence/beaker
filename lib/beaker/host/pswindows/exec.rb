@@ -4,6 +4,8 @@ module PSWindows::Exec
 
   def reboot
     exec(Beaker::Command.new("shutdown /r /t 0"), :expect_connection_failure => true)
+    # rebooting on windows is slooooow
+    sleep(40)
   end
 
   ABS_CMD = 'c:\\\\windows\\\\system32\\\\cmd.exe'
@@ -18,7 +20,21 @@ module PSWindows::Exec
   end
 
   def rm_rf path
+    # ensure that we have the right slashes for windows
+    path = path.gsub(/\//, '\\')
     execute("del /s /q #{path}")
+  end
+
+  # Move the origin to destination. The destination is removed prior to moving.
+  # @param [String] orig The origin path
+  # @param [String] dest the destination path
+  # @param [Boolean] rm Remove the destination prior to move
+  def mv(orig, dest, rm=true)
+    # ensure that we have the right slashes for windows
+    orig = orig.gsub(/\//,'\\')
+    dest = dest.gsub(/\//,'\\')
+    rm_rf dest unless !rm
+    execute("move /y #{orig} #{dest}")
   end
 
   def path
@@ -34,6 +50,22 @@ module PSWindows::Exec
       ip = execute("for /f \"tokens=14\" %f in ('ipconfig ^| find \"IPv6 Address\"') do @echo %f").strip
     end
     ip
+  end
+
+  # Attempt to ping the provided target hostname
+  # @param [String] target The hostname to ping
+  # @param [Integer] attempts Amount of times to attempt ping before giving up
+  # @return [Boolean] true of ping successful, overwise false
+  def ping target, attempts=5
+    try = 0
+    while try < attempts do
+      result = exec(Beaker::Command.new("ping -n 1 #{target}"), :accept_all_exit_codes => true)
+      if result.exit_code == 0
+        return true
+      end
+      try+=1
+    end
+    result.exit_code == 0
   end
 
   # Create the provided directory structure on the host
@@ -95,6 +127,7 @@ module PSWindows::Exec
     if val.empty?
       return ''
     else
+      val = val.split(/\n/)[0] # only take the first result
       if clean
         val.gsub(/#{key}=/,'')
       else

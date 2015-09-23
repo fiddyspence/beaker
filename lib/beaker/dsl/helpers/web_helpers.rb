@@ -33,7 +33,7 @@ module Beaker
         #
         # @param [String] base_url The base url from which to recursively download
         #                          files.
-        # @param [String] file_name The trailing name compnent of both the source url
+        # @param [String] file_name The trailing name component of both the source url
         #                           and the destination file.
         # @param [String] dst_dir The local destination directory.
         #
@@ -41,7 +41,10 @@ module Beaker
         #
         # @!visibility private
         def fetch_http_file(base_url, file_name, dst_dir)
+          require 'open-uri'
+          require 'open_uri_redirections'
           FileUtils.makedirs(dst_dir)
+          base_url.chomp!('/')
           src = "#{base_url}/#{file_name}"
           dst = File.join(dst_dir, file_name)
           if File.exists?(dst)
@@ -49,7 +52,7 @@ module Beaker
           else
             logger.notify "Fetching: #{src}"
             logger.notify "  and saving to #{dst}"
-            open(src) do |remote|
+            open(src, :allow_redirections => :all) do |remote|
               File.open(dst, "w") do |file|
                 FileUtils.copy_stream(remote, file)
               end

@@ -46,6 +46,11 @@ describe Beaker do
     "sudo su -c \"sed -ri 's/^#?PermitRootLogin no|^#?PermitRootLogin yes/PermitRootLogin yes/' /etc/ssh/sshd_config\""
   ], true
 
+  # FreeBSD
+  it_should_behave_like 'enables_root_login', 'freesbd', [
+    "sudo su -c \"sed -ri 's/^#?PermitRootLogin no|^#?PermitRootLogin yes/PermitRootLogin yes/' /etc/ssh/sshd_config\""
+  ], true
+
   it_should_behave_like 'enables_root_login', 'osx', [
     "sudo sed -i '' 's/#PermitRootLogin yes/PermitRootLogin Yes/g' /etc/sshd_config",
     "sudo sed -i '' 's/#PermitRootLogin no/PermitRootLogin Yes/g' /etc/sshd_config"
@@ -92,7 +97,7 @@ describe Beaker do
 
       expect( Beaker::Command ).to receive( :new ).with("ntpdate -t 20 #{ntpserver}").exactly( 5 ).times
 
-      expect{ subject.timesync( hosts, options ) }.to raise_error
+      expect{ subject.timesync( hosts, options ) }.to raise_error(/NTP date was not successful after/)
     end
 
     it "can sync time on windows hosts" do
@@ -165,7 +170,7 @@ describe Beaker do
     it "raises an error on non el-5/6 host" do
       host = make_host( 'testhost', { :platform => Beaker::Platform.new('el-4-platform') } )
 
-      expect{ subject.epel_info_for( host, options )}.to raise_error
+      expect{ subject.epel_info_for( host, options )}.to raise_error(RuntimeError, /epel_info_for does not support el version/)
 
     end
 
@@ -430,7 +435,7 @@ describe Beaker do
     it "can exec the get_ip command" do
       host = make_host('name', { :stdout => "192.168.2.130\n" } )
 
-      expect( Beaker::Command ).to receive( :new ).with( "ip a|awk '/global/{print$2}' | cut -d/ -f1 | head -1" ).once
+      expect( Beaker::Command ).to receive( :new ).with( "ip a|awk '/global/{print$2}' | cut -d/ -f1 | head -1", [], {:prepend_cmds=>nil, :cmdexe=>false} ).once
 
       expect( subject.get_ip( host ) ).to be === "192.168.2.130"
 
@@ -540,6 +545,40 @@ describe Beaker do
       set_env_helper('aix', commands)
     end
 
+    it "can set the environment on a FreeBSD host" do
+      commands = [
+        "sudo perl -pi -e 's/^#?PermitUserEnvironment no/PermitUserEnvironment yes/' /etc/ssh/sshd_config",
+        "sudo /etc/rc.d/sshd restart",
+      ]
+      set_env_helper('freebsd', commands)
+    end
+
+    it "skips an f5 host correctly" do
+      host = make_host('name', {
+         :platform     => 'f5-stuff',
+         :ssh_env_file => 'ssh_env_file',
+         :is_cygwin   => true,
+      } )
+      opts = {
+        :env1_key => :env1_value,
+        :env2_key => :env2_value
+      }
+
+      expect( subject ).to receive( :construct_env ).exactly(0).times
+
+      expect( Beaker::Command ).to receive( :new ).exactly(0).times
+      expect( Beaker::Command ).to receive( :new ).exactly(0).times
+      expect( Beaker::Command ).to receive( :new ).exactly(0).times
+      expect( Beaker::Command ).to receive( :new ).exactly(0).times
+      expect( host ).to receive( :add_env_var ).exactly(0).times
+      opts.each_pair do |key, value|
+        expect( host ).to receive( :add_env_var ).with( key, value ).exactly(0).times
+      end
+      expect( host ).to receive( :exec ).exactly(0).times
+
+      subject.set_env(host, options.merge( opts ))
+    end
+
     def set_env_helper(platform_name, host_specific_commands_array)
       host = make_host('name', {
           :platform     => platform_name,
@@ -559,6 +598,7 @@ describe Beaker do
       expect( Beaker::Command ).to receive( :new ).with( "mkdir -p #{Pathname.new(host[:ssh_env_file]).dirname}" ).once
       expect( Beaker::Command ).to receive( :new ).with( "chmod 0600 #{Pathname.new(host[:ssh_env_file]).dirname}" ).once
       expect( Beaker::Command ).to receive( :new ).with( "touch #{host[:ssh_env_file]}" ).once
+      expect_any_instance_of( Class ).to receive( :extend ).and_return( double( 'class' ).as_null_object )
       expect( Beaker::Command ).to receive( :new ).with( "cat #{host[:ssh_env_file]}" ).once
       expect( host ).to receive( :add_env_var ).with( 'PATH', '$PATH' ).once
       opts.each_pair do |key, value|

@@ -7,6 +7,7 @@ module Unix::Exec
     else
       exec(Beaker::Command.new("/sbin/shutdown -r now"), :expect_connection_failure => true)
     end
+    sleep(10) #if we attempt a reconnect too quickly we end up blocking ¯\_(ツ)_/¯
   end
 
   def echo(msg, abs=true)
@@ -41,14 +42,39 @@ module Unix::Exec
   # Recursively remove the path provided
   # @param [String] path The path to remove
   def rm_rf path
-    exec(Beaker::Command.new("rm -rf #{path}"))
+    execute("rm -rf #{path}")
+  end
+
+  # Move the origin to destination. The destination is removed prior to moving.
+  # @param [String] orig The origin path
+  # @param [String] dest the destination path
+  # @param [Boolean] rm Remove the destination prior to move
+  def mv orig, dest, rm=true
+    rm_rf dest unless !rm
+    execute("mv #{orig} #{dest}")
+  end
+
+  # Attempt to ping the provided target hostname
+  # @param [String] target The hostname to ping
+  # @param [Integer] attempts Amount of times to attempt ping before giving up
+  # @return [Boolean] true of ping successful, overwise false
+  def ping target, attempts=5
+    try = 0
+    while try < attempts do
+      result = exec(Beaker::Command.new("ping -c 1 #{target}"), :accept_all_exit_codes => true)
+      if result.exit_code == 0
+        return true
+      end
+      try+=1
+    end
+    result.exit_code == 0
   end
 
   # Converts the provided environment file to a new shell script in /etc/profile.d, then sources that file.
-  # This is for sles based hosts.
+  # This is for sles and debian based hosts.
   # @param [String] env_file The ssh environment file to read from
   def mirror_env_to_profile_d env_file
-    if self[:platform] =~ /sles-/
+    if self[:platform] =~ /sles-|debian/
       @logger.debug("mirroring environment to /etc/profile.d on sles platform host")
       cur_env = exec(Beaker::Command.new("cat #{env_file}")).stdout
       shell_env = ''
@@ -63,7 +89,7 @@ module Unix::Exec
       exec(Beaker::Command.new("source #{self[:profile_d_env_file]}"))
     else
       #noop
-      @logger.debug("will not mirror environment to /etc/profile.d on non-sles platform host")
+      @logger.debug("will not mirror environment to /etc/profile.d on non-sles/debian platform host")
     end
   end
 
@@ -77,11 +103,11 @@ module Unix::Exec
     env_file = self[:ssh_env_file]
     escaped_val = Regexp.escape(val).gsub('/', '\/').gsub(';', '\;')
     #see if the key/value pair already exists
-    if exec(Beaker::Command.new("grep #{key}=.*#{escaped_val} #{env_file}"), :accept_all_exit_codes => true ).exit_code == 0
+    if exec(Beaker::Command.new("grep ^#{key}=.*#{escaped_val} #{env_file}"), :accept_all_exit_codes => true ).exit_code == 0
       return #nothing to do here, key value pair already exists
     #see if the key already exists
-    elsif exec(Beaker::Command.new("grep #{key} #{env_file}"), :accept_all_exit_codes => true ).exit_code == 0
-      exec(Beaker::SedCommand.new(self['platform'], "s/#{key}=/#{key}=#{escaped_val}:/", env_file))
+    elsif exec(Beaker::Command.new("grep ^#{key} #{env_file}"), :accept_all_exit_codes => true ).exit_code == 0
+      exec(Beaker::SedCommand.new(self['platform'], "s/^#{key}=/#{key}=#{escaped_val}:/", env_file))
     else
       exec(Beaker::Command.new("echo \"#{key}=#{val}\" >> #{env_file}"))
     end

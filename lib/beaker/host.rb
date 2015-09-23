@@ -3,7 +3,7 @@ require 'timeout'
 require 'benchmark'
 require 'rsync'
 
-[ 'command', 'ssh_connection' ].each do |lib|
+[ 'command', 'ssh_connection'].each do |lib|
   require "beaker/#{lib}"
 end
 
@@ -20,75 +20,53 @@ module Beaker
         @command = command
       end
 
+      def has_key?(k)
+        cmd = PuppetCommand.new(@command, '--configprint all')
+        keys = @host.exec(cmd).stdout.split("\n").collect do |x|
+          x[/^[^\s]+/]
+        end
+        keys.include?(k)
+      end
+
       def [](k)
         cmd = PuppetCommand.new(@command, "--configprint #{k.to_s}")
         @host.exec(cmd).stdout.strip
       end
     end
 
-    def self.create name, options
-      case options['HOSTS'][name]['platform']
+    def self.create name, host_hash, options
+      case host_hash['platform']
       when /windows/
-        cygwin = options['HOSTS'][name]['is_cygwin']
+        cygwin = host_hash['is_cygwin']
         if cygwin.nil? or cygwin == true
-          Windows::Host.new name, options
+          Windows::Host.new name, host_hash, options
         else
-          PSWindows::Host.new name, options
+          PSWindows::Host.new name, host_hash, options
         end
       when /aix/
-        Aix::Host.new name, options
+        Aix::Host.new name, host_hash, options
       when /osx/
-        Mac::Host.new name, options
+        Mac::Host.new name, host_hash, options
       when /freebsd/
-        FreeBSD::Host.new name, options
+        FreeBSD::Host.new name, host_hash, options
       else
-        Unix::Host.new name, options
+        Unix::Host.new name, host_hash, options
       end
     end
 
     attr_accessor :logger
-    attr_reader :name, :defaults
-    def initialize name, options
-      @logger = options[:logger]
-      @name, @options = name.to_s, options.dup
+    attr_reader :name, :host_hash, :options
+    def initialize name, host_hash, options
+      @logger = host_hash[:logger] || options[:logger]
+      @name, @host_hash, @options = name.to_s, host_hash.dup, options.dup
 
-      # This is annoying and its because of drift/lack of enforcement/lack of having
-      # a explict relationship between our defaults, our setup steps and how they're
-      # related through 'type' and the differences between the assumption of our two
-      # configurations we have for many of our products
-      type = @options.get_type
-      @defaults = merge_defaults_for_type @options, type
+      @host_hash = self.platform_defaults.merge(@host_hash)
       pkg_initialize
-    end
-
-    # Builds a deprecated keys array, for checking to see if a key is deprecated.
-    # The recommended check after using this method is +result.include?(key)+
-    #
-    # @note an unsupported host type (meaning it has no _aio_defaults_) will return
-    #   an empty hash
-    #
-    # @return [Array<Symbol>] An array of keys that are deprecated for a host
-    def build_deprecated_keys()
-      begin
-        deprecated_keys_hash = self.class.send "foss_defaults".to_sym
-        delete_exceptions_hash = self.class.send "aio_defaults".to_sym
-        deprecated_keys_hash.delete_if do |key, value|
-          delete_exceptions_hash.has_key?(key)
-        end
-      rescue NoMethodError
-        deprecated_keys_hash = {}
-      end
-      deprecated_keys_hash.keys()
     end
 
     def pkg_initialize
       # This method should be overridden by platform-specific code to
       # handle whatever packaging-related initialization is necessary.
-    end
-
-    def merge_defaults_for_type options, type
-      defaults = self.class.send "#{type}_defaults".to_sym
-      defaults.merge(options.merge((options['HOSTS'][name])))
     end
 
     def node_name
@@ -132,18 +110,21 @@ module Beaker
     end
 
     def []= k, v
-      @defaults[k] = v
+      host_hash[k] = v
     end
 
+    # Does this host have this key?  Either as defined in the host itself, or globally? 
     def [] k
-      @deprecated_keys ||= build_deprecated_keys()
-      deprecation_message = "deprecated host key '#{k}'. Perhaps you can use host.puppet[] to get what you're looking for."
-      @logger.warn( deprecation_message ) if @logger && @deprecated_keys.include?(k.to_sym)
-      @defaults[k]
+      host_hash[k] || options[k]
     end
 
+    # Does this host have this key?  Either as defined in the host itself, or globally?
     def has_key? k
-      @defaults.has_key?(k)
+      host_hash.has_key?(k) || options.has_key?(k)
+    end
+
+    def delete k
+      host_hash.delete(k)
     end
 
     # The {#hostname} of this host.
@@ -159,7 +140,7 @@ module Beaker
     # Return the public name of the particular host, which may be different then the name of the host provided in
     # the configuration file as some provisioners create random, unique hostnames.
     def hostname
-      @defaults['vmhostname'] || @name
+      host_hash['vmhostname'] || @name
     end
 
     def + other
@@ -167,7 +148,7 @@ module Beaker
     end
 
     def is_pe?
-      @options.is_pe?
+      self['type'] && self['type'].to_s =~ /pe/
     end
 
     def is_cygwin?
@@ -220,7 +201,7 @@ module Beaker
     end
 
     def log_prefix
-      if @defaults['vmhostname']
+      if host_hash['vmhostname']
         "#{self} (#{@name})"
       else
         self.to_s
@@ -233,8 +214,9 @@ module Beaker
     end
 
     #Return the ip address of this host
+    #Always pull fresh, because this can sometimes change
     def ip
-      self[:ip] ||= get_ip
+      self['ip'] = get_ip
     end
 
     #@return [Boolean] true if x86_64, false otherwise
@@ -243,13 +225,31 @@ module Beaker
     end
 
     def connection
-      @connection ||= SshConnection.connect( reachable_name,
+      # create new connection object if necessary
+      @connection ||= SshConnection.connect( { :ip => self['ip'], :vmhostname => self['vmhostname'], :hostname => @name },
                                              self['user'],
                                              self['ssh'], { :logger => @logger } )
+      # update connection information
+      if self['ip'] && (@connection.ip != self['ip'])
+        @connection.ip = self['ip']
+      end
+      if self['vmhostname'] && (@connection.vmhostname != self['vmhostname'])
+        @connection.vmhostname = self['vmhostname']
+      end
+      if @name && (@connection.hostname != @name)
+        @connection.hostname = @name
+      end
+      @connection
     end
 
     def close
-      @connection.close if @connection
+      if @connection
+        @connection.close
+        # update connection information
+        @connection.ip         = self['ip'] if self['ip']
+        @connection.vmhostname = self['vmhostname'] if self['vmhostname']
+        @connection.hostname   = @name
+      end
       @connection = nil
     end
 
@@ -261,7 +261,11 @@ module Beaker
         output_callback = nil
       else
         @logger.debug "\n#{log_prefix} #{Time.new.strftime('%H:%M:%S')}$ #{cmdline}"
-        output_callback = logger.method(:host_output)
+        if @options[:color_host_output]
+          output_callback = logger.method(:color_host_output)
+        else
+          output_callback = logger.method(:host_output)
+        end
       end
 
       unless $dry_run
@@ -270,9 +274,11 @@ module Beaker
         # and they shouldn't be ssh specific
         result = nil
 
+        @logger.step_in()
         seconds = Benchmark.realtime {
           result = connection.execute(cmdline, options, output_callback)
         }
+        @logger.step_out()
 
         if not options[:silent]
           @logger.debug "\n#{log_prefix} executed in %0.2f seconds" % seconds
@@ -296,6 +302,9 @@ module Beaker
           # No, TestCase has the knowledge about whether its failed, checking acceptable
           # exit codes at the host level and then raising...
           # is it necessary to break execution??
+          if options[:accept_all_exit_codes] && options[:acceptable_exit_codes]
+            @logger.warn ":accept_all_exit_codes & :acceptable_exit_codes set. :accept_all_exit_codes overrides, but they shouldn't both be set at once"
+          end
           if !options[:accept_all_exit_codes] && !result.exit_code_in?(Array(options[:acceptable_exit_codes] || [0, nil]))
             raise CommandFailure, "Host '#{self}' exited with #{result.exit_code} running:\n #{cmdline}\nLast #{@options[:trace_limit]} lines of output were:\n#{result.formatted_output(@options[:trace_limit])}"
           end
@@ -376,6 +385,9 @@ module Beaker
 
         # copy each file to the host
         dir_source.each do |s|
+          # Copy files, not directories (as they are copied recursively)
+          next if File.directory?(s)
+
           s_path = Pathname.new(s)
           if s_path.absolute?
             file_path = File.join(target, File.dirname(s).gsub(/#{Regexp.escape(File.dirname(File.absolute_path(source)))}/,''))
@@ -424,22 +436,28 @@ module Beaker
 
       Rsync.host = hostname_with_user
 
-      if ssh_opts.has_key?('keys') and
-        ssh_opts.has_key?('auth_methods') and
-        ssh_opts['auth_methods'].include?('publickey')
+      # vagrant uses temporary ssh configs in order to use dynamic keys
+      # without this config option using ssh may prompt for password
+      if ssh_opts[:config] and File.exists?(ssh_opts[:config])
+        ssh_args << "-F #{ssh_opts[:config]}"
+      else
+        if ssh_opts.has_key?('keys') and
+            ssh_opts.has_key?('auth_methods') and
+            ssh_opts['auth_methods'].include?('publickey')
 
-        key = ssh_opts['keys']
+          key = ssh_opts['keys']
 
-        # If an array was set, then we use the first value
-        if key.is_a? Array
-          key = key.first
+          # If an array was set, then we use the first value
+          if key.is_a? Array
+            key = key.first
+          end
+
+          # We need to expand tilde manually as rsync can be
+          # funny sometimes
+          key = File.expand_path(key)
+
+          ssh_args << "-i #{key}"
         end
-
-        # We need to expand tilde manually as rsync can be
-        # funny sometimes
-        key = File.expand_path(key)
-
-        ssh_args << "-i #{key}"
       end
 
       if ssh_opts.has_key?(:port)
@@ -475,12 +493,12 @@ module Beaker
   end
 
   [
-     'unix',
-     'aix',
-     'mac',
-     'freebsd',
-     'windows',
-     'pswindows',
+    'unix',
+    'aix',
+    'mac',
+    'freebsd',
+    'windows',
+    'pswindows',
   ].each do |lib|
     require "beaker/host/#{lib}"
   end

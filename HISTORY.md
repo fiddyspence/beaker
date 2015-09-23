@@ -1,6 +1,24 @@
 # default - History
 ## Tags
-* [LATEST - 6 May, 2015 (50128ac0)](#LATEST)
+* [LATEST - 15 Sep, 2015 (96d9104d)](#LATEST)
+* [2.23.0 - 9 Sep, 2015 (2532324a)](#2.23.0)
+* [2.22.0 - 1 Sep, 2015 (96ec20a7)](#2.22.0)
+* [2.21.0 - 26 Aug, 2015 (40281eb2)](#2.21.0)
+* [2.20.0 - 17 Aug, 2015 (8a419e98)](#2.20.0)
+* [2.19.0 - 13 Aug, 2015 (80897129)](#2.19.0)
+* [2.18.3 - 28 Jul, 2015 (d9a02474)](#2.18.3)
+* [2.18.2 - 27 Jul, 2015 (c84f6f23)](#2.18.2)
+* [2.18.1 - 14 Jul, 2015 (6a82f99f)](#2.18.1)
+* [2.18.0 - 13 Jul, 2015 (e018f2fc)](#2.18.0)
+* [2.17.0 - 10 Jul, 2015 (aaac4771)](#2.17.0)
+* [2.16.0 - 6 Jul, 2015 (b3e76227)](#2.16.0)
+* [2.15.1 - 1 Jul, 2015 (cd6f0bab)](#2.15.1)
+* [2.15.0 - 1 Jul, 2015 (07c416fb)](#2.15.0)
+* [2.14.1 - 5 Jun, 2015 (35026603)](#2.14.1)
+* [2.14.0 - 4 Jun, 2015 (c0ebcd16)](#2.14.0)
+* [2.13.0 - 29 May, 2015 (dd70aa66)](#2.13.0)
+* [2.12.0 - 20 May, 2015 (62845ce9)](#2.12.0)
+* [2.11.0 - 6 May, 2015 (b775cc73)](#2.11.0)
 * [2.10.0 - 22 Apr, 2015 (c4f37479)](#2.10.0)
 * [2.9.0 - 9 Apr, 2015 (b161d325)](#2.9.0)
 * [beaker2.8.0 - 26 Mar, 2015 (2d25d06d)](#beaker2.8.0)
@@ -74,12 +92,2662 @@
 * [pe2.0.3 - 21 Feb, 2012 (492ff756)](#pe2.0.3)
 * [pe2.0.2 - 3 Feb, 2012 (e36f0d22)](#pe2.0.2)
 * [pe2.0.1 - 31 Jan, 2012 (3a118201)](#pe2.0.1)
-* [pe2.0.0 - 31 Jan, 2012 (8d064e33)](#pe2.0.0)
 * [pe2.0 - 11 Nov, 2011 (4d7b65b6)](#pe2.0)
 * [pe1.2 - 6 Sep, 2011 (ba3dadd2)](#pe1.2)
 
 ## Details
-### <a name = "LATEST">LATEST - 6 May, 2015 (50128ac0)
+### <a name = "LATEST">LATEST - 15 Sep, 2015 (96d9104d)
+
+* (GEM) update beaker version to 2.24.0 (96d9104d)
+
+* Merge pull request #956 from kevpl/bkr531_osx_update (ca365d15)
+
+
+```
+Merge pull request #956 from kevpl/bkr531_osx_update
+
+(BKR-531) updated osx name structure to match RE changes
+```
+* (BKR-531) review clarifications & clean-up (308815d7)
+
+* Merge pull request #950 from anodelman/timeout (1a528f21)
+
+
+```
+Merge pull request #950 from anodelman/timeout
+
+(BKR-514) increase polling timeout when requesting vpool instances
+```
+* (BKR-531) updated osx name structure to match RE changes (f4512f99)
+
+* Merge pull request #949 from cybercom-finland/bkr-516/more-openstack-credentials-from-env (11243052)
+
+
+```
+Merge pull request #949 from cybercom-finland/bkr-516/more-openstack-credentials-from-env
+
+(BKR-516) Lookup more openstack credentials from ENV
+```
+* Merge pull request #953 from GeoffWilliams/docker_error_catch (5d79e90a)
+
+
+```
+Merge pull request #953 from GeoffWilliams/docker_error_catch
+
+(BKR-523) Beaker prints error message on exit when using docker containers
+```
+* Merge pull request #952 from GeoffWilliams/no_more_grey (c13914a0)
+
+
+```
+Merge pull request #952 from GeoffWilliams/no_more_grey
+
+(BKR-519) Beaker prints invisible messages in debug mode (black-on-bl…
+```
+* (BKR-523) Beaker prints error message on exit when using docker containers (ddd05816)
+
+
+```
+(BKR-523) Beaker prints error message on exit when using docker containers
+
+Capture the strange error message from docker (and all other internal docker errors) and display the message as a logged warning instead of a stack trace.  This will preven the message from causing a CI test failure as the exit status is now zero
+```
+* (BKR-519) Beaker prints invisible messages in debug mode (black-on-black) (20cfbdd2)
+
+
+```
+(BKR-519) Beaker prints invisible messages in debug mode (black-on-black)
+Use normal colour instead of bold as some terminals (mac) can't handle the grey without additional configuration
+```
+* Merge pull request #951 from johnduarte/aix-curl-opts (3b1fd835)
+
+
+```
+Merge pull request #951 from johnduarte/aix-curl-opts
+
+(BKR-520) Add curl options for AIX
+```
+* Merge pull request #945 from mcanevet/fix/BKR-506 (673ac239)
+
+
+```
+Merge pull request #945 from mcanevet/fix/BKR-506
+
+(BKR-506) Fix FQDN
+```
+* Merge pull request #915 from jstremick/feature/aws_credential_sources (e643f054)
+
+
+```
+Merge pull request #915 from jstremick/feature/aws_credential_sources
+
+BRK-431: Find AWS credentials from environment variables
+```
+* Merge pull request #946 from kevpl/bkr455_exitcodes_logging (b19d1238)
+
+
+```
+Merge pull request #946 from kevpl/bkr455_exitcodes_logging
+
+(BKR-455) added warning message for conflicting exit code handling
+```
+* Merge pull request #948 from cybercom-finland/bkr-515/host_name_prefix (8b8b2cc2)
+
+
+```
+Merge pull request #948 from cybercom-finland/bkr-515/host_name_prefix
+
+(BKR-515) add config option host_name_prefix
+```
+* (BKR-520) Add curl options for AIX (f6438338)
+
+
+```
+(BKR-520) Add curl options for AIX
+
+The curl command on AIX does not support the `-k flag`. This commit
+creates condition statements to replace the `-k` flag in the curl
+options with `--tlsv1` when the platform is AIX.
+```
+* (BKR-514) increase polling timeout when requesting vpool instances (05fa681e)
+
+
+```
+(BKR-514) increase polling timeout when requesting vpool instances
+
+- increase timeout to 15 minutes
+- write out failure message to get more information about why the pool
+  request failed
+```
+* Merge pull request #947 from anodelman/osx (9258e8ec)
+
+
+```
+Merge pull request #947 from anodelman/osx
+
+(BKR-482) Add support for OSX 10.11 El Capitan (x86_64)
+```
+* (BKR-482) Add support for OSX 10.11 El Capitan (x86_64) (439568c4)
+
+
+```
+(BKR-482) Add support for OSX 10.11 El Capitan (x86_64)
+
+- correctly turn on ssh user environment support
+- update platform list
+```
+* (BKR-455) added warning message for conflicting exit code handling (44f55339)
+
+* Merge pull request #944 from puppetlabs/bkr-505/fix-broken-confine_block-behavior (a5cd36a1)
+
+
+```
+Merge pull request #944 from puppetlabs/bkr-505/fix-broken-confine_block-behavior
+
+(BKR-505) rescue `SkipTest` in `confine_block`
+```
+* (BKR-505) Add acceptance tests for #confine_block (0d73ff10)
+
+
+```
+(BKR-505) Add acceptance tests for #confine_block
+
+These tests fail when the code patch in this PR is not present, and
+succeed when the patch is present.
+```
+* (BKR-515) Add config option host_name_prefix (66cbd292)
+
+
+```
+(BKR-515) Add config option host_name_prefix
+
+This helps to identify hosts if you do not destroy them.
+
+If defined, hostname is prefixed.
+```
+* (BKR-516) Lookup more openstack credentials from ENV (34b4054a)
+
+
+```
+(BKR-516) Lookup more openstack credentials from ENV
+
+Add support to configure openstack via these environment
+variables (environment variable name, configuration option)
+- OS_KEYNAME openstack_keyname
+- OS_NETWORK openstack_network
+- OS_REGION  openstack_region
+```
+* (BKR-506) Fix FQDN (ab283113)
+
+* (BKR-505) rescue SkipTest in confine_block (efd0c3e3)
+
+
+```
+(BKR-505) rescue SkipTest in confine_block
+
+Prior to this, use of confine_block would result in all following code in the
+test case being skipped in situations where the host list had no matches for
+the confine_block.  The entire purpose of confine_block is to limit the scope
+of the confine to the passed block.
+
+Also, ensure and rescue at the method level do not require an additional
+wrapping begin..end block.
+```
+* BRK-431: Correct env variable names and prefix (3026cd88)
+
+* BRK-431: Corrected AWS keys used in .fog file (f43460e6)
+
+* BRK-431: Find AWS credentials from environment variables (5e085999)
+
+### <a name = "2.23.0">2.23.0 - 9 Sep, 2015 (2532324a)
+
+* (HISTORY) update beaker history for gem release 2.23.0 (2532324a)
+
+* (GEM) update beaker version to 2.23.0 (db33f827)
+
+* Merge pull request #943 from MikaelSmith/imp/master/BKR-504 (e10c5491)
+
+
+```
+Merge pull request #943 from MikaelSmith/imp/master/BKR-504
+
+(BKR-504) Update Solaris package name for release version
+```
+* (BKR-504) Update Solaris package name for release version (44602018)
+
+
+```
+(BKR-504) Update Solaris package name for release version
+
+The planned Solaris package names for the puppet-agent package were
+changed to incorporate a release version, as already handled for other
+platforms. Update the Solaris package name to include the hard-coded
+release `1` naming.
+```
+* Merge pull request #942 from kevpl/bkr497_f5_skipconfigure (5a783a91)
+
+
+```
+Merge pull request #942 from kevpl/bkr497_f5_skipconfigure
+
+(BKR-497) skip configuration for f5 hosts
+```
+* Merge pull request #940 from anodelman/preserved-hosts (fe8df0b0)
+
+
+```
+Merge pull request #940 from anodelman/preserved-hosts
+
+(BKR-440) host_preserved.yml file should disable the pre_suite
+```
+* (BKR-497) fixed set_env to skip f5 platforms (a6301f24)
+
+* (BKR-497) skip configuration for f5 hosts (87bdf9b7)
+
+* Merge pull request #941 from kevpl/bkr469_ec2_keys (d16fef00)
+
+
+```
+Merge pull request #941 from kevpl/bkr469_ec2_keys
+
+(BKR-469) added f5 wait checks
+```
+* (BKR-469) added f5 platform specific provisioning wait checks (8f5a9464)
+
+* (BKR-440) host_preserved.yml file should disable the pre_suite (1b6e0bec)
+
+
+```
+(BKR-440) host_preserved.yml file should disable the pre_suite
+
+- instead of just removing the pre_suite/post_suite/tests from
+the options, explicitly set it to be []
+- this means that you don't end up accidentally running a pre-suite
+  defined in a secondary options file
+```
+* (BKR-469) added options_hash-provided keys to aws public_key check (274d5df9)
+
+* Merge pull request #937 from puppetlabs/maint/constrain-add_system32_hosts_entry-to-pswindows (a7857fab)
+
+
+```
+Merge pull request #937 from puppetlabs/maint/constrain-add_system32_hosts_entry-to-pswindows
+
+(MAINT) constrain `add_system32_hosts_entry`
+```
+* (MAINT) remove spec tests for add_system32_hosts_entry (bd76ee56)
+
+
+```
+(MAINT) remove spec tests for add_system32_hosts_entry
+
+These tests do not actually exercise the code path in question -- had they
+exercised that code path, we would have known earlier that this helper only
+works on powershell systems.
+
+We have replacement tests coming in BKR-358 which will exercise this code path
+more fully (they are what exposed this problem), so removing these tests in
+favor landing those.
+```
+* (MAINT) constrain `add_system32_hosts_entry` (88e86059)
+
+
+```
+(MAINT) constrain `add_system32_hosts_entry`
+
+Prior to this commit, this method was available to any windows platform,
+including cygwin-enabled windows installed. This method only actually works
+on non-cygwin windows platforms, and this discrepancy was uncovered during
+work for BKR-358, where we are adding acceptance tests for the host helper
+methods.
+```
+### <a name = "2.22.0">2.22.0 - 1 Sep, 2015 (96ec20a7)
+
+* (HISTORY) update beaker history for gem release 2.22.0 (96ec20a7)
+
+* (GEM) update beaker version to 2.22.0 (e693a4e7)
+
+* Merge pull request #935 from MikaelSmith/feat/master/BKR-470 (9a96c210)
+
+
+```
+Merge pull request #935 from MikaelSmith/feat/master/BKR-470
+
+(BKR-470) Add Solaris to install_puppet_agent_dev_repo_on
+```
+* Merge pull request #938 from anodelman/none-hypervisor (c5ae989f)
+
+
+```
+Merge pull request #938 from anodelman/none-hypervisor
+
+(BKR-458) add beaker notouch hypervisor
+```
+* Merge pull request #934 from anodelman/puppet-agent (8a495267)
+
+
+```
+Merge pull request #934 from anodelman/puppet-agent
+
+(BKR-459) update osx package name and directory to correspond...
+```
+* (BKR-458) add beaker notouch hypervisor (f31ba283)
+
+
+```
+(BKR-458) add beaker notouch hypervisor
+
+- support for a 'noop' hypervisor that does no
+  configuration/validation/provision/cleanup/proxy-ing
+```
+* (maint) Add spec test for install_puppet_agent_dev_repo_on (0a6eb377)
+
+* (BKR-472) Add Solaris 11 support for installing puppet-agent (6960c09b)
+
+
+```
+(BKR-472) Add Solaris 11 support for installing puppet-agent
+
+Solaris 11 re-uses most of the setup for Solaris 10, but the root user's
+home directory on Solaris 10 is special. Fix up the configuration to
+special-case Solaris 10.
+```
+* (BKR-470) Add Solaris to install_puppet_agent_dev_repo_on (265f6ec3)
+
+
+```
+(BKR-470) Add Solaris to install_puppet_agent_dev_repo_on
+
+Adds Solaris support for installing packages in the
+install_puppet_agent_dev_repo_on helper.
+```
+* (MAINT) fix ability to set external file dir through opts (65d2bbb7)
+
+
+```
+(MAINT) fix ability to set external file dir through opts
+
+- we were overriding for windows/mac hosts to a different default, so
+  anything passed in by the user was ignored
+```
+* (BKR-459) update osx package name and directory to correspond... (db9090ef)
+
+
+```
+(BKR-459) update osx package name and directory to correspond...
+
+... to RE changes
+
+- updated install_puppet_agent_dev_repo_on to handle new directory
+  structure and name change
+- backwards compatible, handles both old and new
+```
+### <a name = "2.21.0">2.21.0 - 26 Aug, 2015 (40281eb2)
+
+* (HISTORY) update beaker history for gem release 2.21.0 (40281eb2)
+
+* (GEM) update beaker version to 2.21.0 (a6ef010f)
+
+* Merge pull request #933 from sschneid/license_update (978b2ede)
+
+
+```
+Merge pull request #933 from sschneid/license_update
+
+(maint) Update license copyright
+```
+* Merge pull request #932 from anodelman/win-fix (a5b8f291)
+
+
+```
+Merge pull request #932 from anodelman/win-fix
+
+(BKR-293) PowerShell Hangs on Windows 2008 R2 WMF 5.0 Beta
+```
+* Merge pull request #919 from colinPL/pkg_acceptance (cb6fa705)
+
+
+```
+Merge pull request #919 from colinPL/pkg_acceptance
+
+(maint) Add Package Acceptance Tests
+```
+* (maint) Update license copyright (ed0a84ec)
+
+* Merge pull request #926 from anodelman/aio-paths (dce6c683)
+
+
+```
+Merge pull request #926 from anodelman/aio-paths
+
+(BKR-395) Calling `remove_defaults_on` twice with `type: aio` in...
+```
+* Merge pull request #931 from colinPL/bkr452_deb_code (9885aab1)
+
+
+```
+Merge pull request #931 from colinPL/bkr452_deb_code
+
+(BRK-452) Use Platform To Get Code Name
+```
+* (BKR-293) PowerShell Hangs on Windows 2008 R2 WMF 5.0 Beta (0d99ed70)
+
+
+```
+(BKR-293) PowerShell Hangs on Windows 2008 R2 WMF 5.0 Beta
+
+- beaker powershell regressions discovered while working on this bug,
+  mostly around ensuring that we are using the correct path separator on
+  pswindowns machines
+```
+* Merge pull request #929 from puppetlabs/maint/fix-git-install-load-path-issue (f1e1ef00)
+
+
+```
+Merge pull request #929 from puppetlabs/maint/fix-git-install-load-path-issue
+
+(MAINT) Fix acceptance puppet_git load path
+```
+* Merge pull request #927 from anodelman/maint (87b094d1)
+
+
+```
+Merge pull request #927 from anodelman/maint
+
+(BKR-449) beaker acceptance base smoketest intermittant failure...
+```
+* (maint) fix old issue with clone_git_repo_on test (27bae4b5)
+
+
+```
+(maint) fix old issue with clone_git_repo_on test
+
+Prior to this change clone_git_repo_on acceptance test would fail as we
+reverted the method's behavior to be backwards compatible.  it appears
+this tests is not getting run in CI. Also add install_utils to the
+load_path so the user doesn't have to.
+```
+* (BRK-452) Use Platform To Get Code Name (518f25ae)
+
+
+```
+(BRK-452) Use Platform To Get Code Name
+
+The unix/pkg.rb had its own mapping of platform to debian code name.
+However, this is available through the Platform class. This commit
+removes the duplicate data in pkg.rb and uses self['platform'].codename
+in its place.
+```
+* (maint) Add vivid Repo Fixture (fc5afde6)
+
+
+```
+(maint) Add vivid Repo Fixture
+
+Add repo fixture for Ubuntu 15.04 (vivid).
+```
+* (MAINT) Fix acceptance puppet_git load path (efa36129)
+
+
+```
+(MAINT) Fix acceptance puppet_git load path
+
+Prior to this commit, running the acceptance tests locally without specifying a
+specific load path would result in a require failure if attempting to test against
+puppet installed via git.
+
+This updates the load path to fix the problem.
+```
+* (maint) Add trusty Repo Template (c5ed7a0d)
+
+
+```
+(maint) Add trusty Repo Template
+
+Add repo fixture for trusty instances.
+```
+* (BKR-449) beaker acceptance base smoketest intermittant failure... (f626b057)
+
+
+```
+(BKR-449) beaker acceptance base smoketest intermittant failure...
+
+...on ubuntu 1504
+
+- when attempting to reconnect post reboot we are getting into a
+  blocking state, most likely an issue with the Net::SSH gem
+- just give some breathing room before moving on from a reboot and
+  everything is okay
+```
+* (maint) Add Missing Fedora Templates (485dcefa)
+
+
+```
+(maint) Add Missing Fedora Templates
+
+Add missing fedora rpm repo templates for packaging tests.
+```
+* Merge pull request #921 from mcanevet/fix/hack_etc_host_on_openstack (cf09c58b)
+
+
+```
+Merge pull request #921 from mcanevet/fix/hack_etc_host_on_openstack
+
+(BKR-443) Hack /etc/hosts when using openstack
+```
+* Merge pull request #893 from biemond/solaris-fixes (b402911a)
+
+
+```
+Merge pull request #893 from biemond/solaris-fixes
+
+BKR-408 Supporting solaris as a beakernode
+```
+* (BKR-395) Calling `remove_defaults_on` twice with `type: aio` in... (97cbc1a9)
+
+
+```
+(BKR-395) Calling `remove_defaults_on` twice with `type: aio` in...
+
+...config file throws exception
+
+- ensure that we don't blow away the PATH and break the world
+```
+* (BKR-443) Hack /etc/hosts when using openstack (a701c7cc)
+
+* (maint) Exclude OS X From Most Things (c9c224aa)
+
+
+```
+(maint) Exclude OS X From Most Things
+
+Exclude OS X systems from running the generic and unix-specific package
+tests. A special test suite will need to be created for these systems.
+```
+* (maint) Change assert Method; Workaround debian Check for Package (09b7c9fb)
+
+
+```
+(maint) Change assert Method; Workaround debian Check for Package
+
+assert_equal(true,...) is the same as just assert(...). Change all
+of those matching calls to just assert.
+
+beaker can incorrectly report a package as being installed when in fact it is not. This is specific to debian systems. As a work around to the above, debian systems will use check_for_command to determine whether the specific package is installed.
+```
+* (maint) Add Package Acceptance Tests (a9919557)
+
+
+```
+(maint) Add Package Acceptance Tests
+
+Add acceptance tests that exercise the host packages functionality. There are two files: one for all hosts and one targeting unix hosts specifically.
+
+This includes fixtures for support the deploy_*_repo methods.
+```
+* BKR-408 Supporting solaris as a beakernode #893 (45f1f6c5)
+
+
+```
+BKR-408 Supporting solaris as a beakernode #893
+
+- copy certs to solaris root home folder  /
+- gsed of CSW to allow ssh root login
+- restart sshd daemon
+
+solaris 11 fixes
+
+- root home is /root and not /
+- PermitRootLogin in solaris 11 is not in comment
+- change security of the user root for solaris else no ssh login without
+password
+```
+### <a name = "2.20.0">2.20.0 - 17 Aug, 2015 (8a419e98)
+
+* (HISTORY) update beaker history for gem release 2.20.0 (8a419e98)
+
+* (GEM) update beaker version to 2.20.0 (1d735a7a)
+
+* Merge pull request #925 from objectverbobject/BKR-448 (d76d2a4a)
+
+
+```
+Merge pull request #925 from objectverbobject/BKR-448
+
+(BKR-448) Check for connection object during host.close
+```
+* Merge pull request #924 from anodelman/puppet-agent (ba4b3d4e)
+
+
+```
+Merge pull request #924 from anodelman/puppet-agent
+
+(BKR-447) Ubuntu PE puppet-agent urls not being generated correctly
+```
+* Merge pull request #904 from dylanratcliffe/add-per-node-memory (cc3d716a)
+
+
+```
+Merge pull request #904 from dylanratcliffe/add-per-node-memory
+
+(BKR-423) Added the ability to set CPUs and memory per node
+```
+* Merge pull request #923 from puppetlabs/bkr-428/change-assertion-in-teardown-behavior (5f60c353)
+
+
+```
+Merge pull request #923 from puppetlabs/bkr-428/change-assertion-in-teardown-behavior
+
+[BKR-428] gracefully handle assert failure in teardown
+```
+* (BKR-448) Check for connection object during host.close (255f43f6)
+
+
+```
+(BKR-448) Check for connection object during host.close
+
+The close method for hosts assumed the connection object existed when
+trying to set the hostname; this fix checks to ensure the connection
+object exists prior to calling any methods on it.
+```
+* (BKR-447) Ubuntu PE puppet-agent urls not being generated correctly (bb71b7ba)
+
+
+```
+(BKR-447) Ubuntu PE puppet-agent urls not being generated correctly
+
+- incorrectly adding additional '.' to ubuntu version strings that were
+  already correct
+- added spec test to ensure correct behavior
+- passed local testing
+```
+* Merge pull request #922 from anodelman/many-names (334d63a8)
+
+
+```
+Merge pull request #922 from anodelman/many-names
+
+(BKR-446) add ability to identify a host by vmhostname/ip
+```
+* (BKR-428) gracefully handle assert failure in teardown (f8b97d7b)
+
+
+```
+(BKR-428) gracefully handle assert failure in teardown
+
+Prior to this commit, if a teardown method ran code which contained assertions,
+and an assertion failed, the exception raised by the assertion failure was
+uncaught and beaker would crash.
+
+This change treats the assertion failure as a test failure and allows beaker
+to continue running.
+```
+* (BKR-446) add ability to identify a host by vmhostname/ip (24ecdf4b)
+
+
+```
+(BKR-446) add ability to identify a host by vmhostname/ip
+
+- make it possible to run commands like:
+
+on 'vmhostname', "command"
+on '0.0.0.0', "command"
+```
+* (BKR-423) Added the ability to set CPUs and memory per node (132b6b7e)
+
+### <a name = "2.19.0">2.19.0 - 13 Aug, 2015 (80897129)
+
+* (HISTORY) update beaker history for gem release 2.19.0 (80897129)
+
+* (GEM) update beaker version to 2.19.0 (821aefba)
+
+* Merge pull request #918 from johnduarte/dnf_fed22 (d9a52536)
+
+
+```
+Merge pull request #918 from johnduarte/dnf_fed22
+
+(BKR-439) Add DNF for fedora-22
+```
+* (BKR-439) Add DNF for fedora-22 (f13a1e3c)
+
+
+```
+(BKR-439) Add DNF for fedora-22
+
+This commit adds a case condition for fedora-22 to use the 'dnf'
+command where the 'yum' command would previously have been executed.
+```
+* Merge pull request #917 from kevpl/bkr346_hostspreserved_multiple (fbeaf7fc)
+
+
+```
+Merge pull request #917 from kevpl/bkr346_hostspreserved_multiple
+
+(BKR-346) fixed repeat hosts_preserved issue
+```
+* Merge pull request #868 from er0ck/improvement/master/BKR-366-merge_up_install_from_git_changes_from_deployer_puppet (0029295b)
+
+
+```
+Merge pull request #868 from er0ck/improvement/master/BKR-366-merge_up_install_from_git_changes_from_deployer_puppet
+
+(BKR-366) merge-up install_from_git changes from deployer and puppet
+```
+* Merge pull request #906 from Iristyle/ticket/master/BKR-421-refactor-msi-installation (d7ae5ea7)
+
+
+```
+Merge pull request #906 from Iristyle/ticket/master/BKR-421-refactor-msi-installation
+
+(BKR-421) Refactor MSI installation
+```
+* (BKR-346) fixed repeat hosts_preserved issue (c2f713cc)
+
+* Merge pull request #916 from sschneid/use_token_during_cleanup (8b500667)
+
+
+```
+Merge pull request #916 from sschneid/use_token_during_cleanup
+
+(maint) Supply token (if exists) during VM cleanup
+```
+* Merge pull request #902 from anodelman/type (4737c014)
+
+
+```
+Merge pull request #902 from anodelman/type
+
+(BKR-412) clarify 'types' in beaker
+```
+* Merge pull request #914 from anodelman/answers (4d462c12)
+
+
+```
+Merge pull request #914 from anodelman/answers
+
+(BKR-340) separate answer file generation into a library
+```
+* Merge pull request #911 from anodelman/deb7 (b573ed80)
+
+
+```
+Merge pull request #911 from anodelman/deb7
+
+(BKR-422) debian7 fails to reboot during smoketest
+```
+* (maint) Supply token (if exists) during VM cleanup (2e1b91ae)
+
+* Merge pull request #865 from madAndroid/BKR-208-preserve-SUT-host-output (1d267e8a)
+
+
+```
+Merge pull request #865 from madAndroid/BKR-208-preserve-SUT-host-output
+
+(BKR-208) Preserve SUT host output
+```
+* Merge pull request #913 from kevpl/bkr389_upgradepe_agentupgrades (e3784f1a)
+
+
+```
+Merge pull request #913 from kevpl/bkr389_upgradepe_agentupgrades
+
+(BKR-389) fixed upgrade_pe issues for agent upgrade module
+```
+* (BKR-389) fixed upgrade_pe issues for agent upgrade module (c5d10577)
+
+* Merge pull request #912 from anodelman/new-platform (b611d502)
+
+
+```
+Merge pull request #912 from anodelman/new-platform
+
+(BKR-372) add support for ubuntu 15.04, Vivid, amd64 & i386
+```
+* Merge pull request #886 from kevpl/bkr393_pm_ubuntu_fix (a7395ce7)
+
+
+```
+Merge pull request #886 from kevpl/bkr393_pm_ubuntu_fix
+
+(BKR-393) fixed ubuntu PM URLs, didn't match package versions
+```
+* Merge pull request #870 from vindir/feature/aws-specs (41568f1f)
+
+
+```
+Merge pull request #870 from vindir/feature/aws-specs
+
+(BKR-349) AwsSdk Hypervisor Specs (for review <3)
+```
+* Merge pull request #885 from mcanevet/fix/fqdn (3a9d36f1)
+
+
+```
+Merge pull request #885 from mcanevet/fix/fqdn
+
+(BKR-391) Add fqdn to /etc/hosts
+```
+* (BKR-372) add support for ubuntu 15.04, Vivid, amd64 & i386 (f9a2e1ef)
+
+
+```
+(BKR-372) add support for ubuntu 15.04, Vivid, amd64 & i386
+
+- not quite sure what is going on here, but removing the timeout and
+  using the Net::SSH default allows ubuntu15.04 to reboot successfully
+  (was stuck on a blocking call to Net::SSH.start)
+```
+* Merge pull request #910 from kevpl/bkr426_fetchhttpfile_longersolution (2b252ce0)
+
+
+```
+Merge pull request #910 from kevpl/bkr426_fetchhttpfile_longersolution
+
+(BKR-426) long-term fix to end '/' issue in fetch_http_file
+```
+* Merge pull request #895 from anodelman/maint (7467e09c)
+
+
+```
+Merge pull request #895 from anodelman/maint
+
+(BKR-410) `confine :except, {}, [host1,host2]` does not work as expected
+```
+* (BKR-422) debian7 fails to reboot during smoketest (f96a15aa)
+
+
+```
+(BKR-422) debian7 fails to reboot during smoketest
+
+- to fix current smoketest redness change how we connect to beaker boxes
+- do three separate connection attempts (with retries)
+  * first with ip
+  * then the virtual hostname (vmhostname)
+  * then the name of the box provided by the user (hostname)
+- Only when all three fail do we fail out
+- decrease the Net::SSH timeout so that we can move through the various
+  attempts in a reasonable amount of time
+- add a sleep post windows reboot, getting reds here because windows
+  takes so long to come back up
+```
+* Merge pull request #899 from anodelman/install (f4cc4c9b)
+
+
+```
+Merge pull request #899 from anodelman/install
+
+(BKR-414) install_pe_on assumes hosts will be an array
+```
+* (BKR-426) long-term fix to end '/' issue in fetch_http_file (013a7e3c)
+
+* (BKR-421) Windows installs with service Disabled (4eae7d02)
+
+
+```
+(BKR-421) Windows installs with service Disabled
+
+ - Modify the default behavior to install Puppet with a disabled service
+   instead of Automatic
+ - Modify do_install so that on a Windows MSI install the method
+   setup_defaults_and_config_helper_on is called.  This replaces the
+   existing configure_pe_defaults_on behavior and augments it with an
+   additional `puppet agent -t` run that generates certificates.  Since
+   it calls puppet commands for configuring the server and certname,
+   additionally remove the redundant passing of these values to the
+   Windows installer.
+```
+* (BKR-421) Verify Windows puppet service status (5c70e60c)
+
+
+```
+(BKR-421) Verify Windows puppet service status
+
+ - After completing an MSI install, verify the service status of the
+   puppet service.
+```
+* (BKR-421) Refactor foss_utils to use WindowsUtils (9b37abb5)
+
+
+```
+(BKR-421) Refactor foss_utils to use WindowsUtils
+
+ - There are 4 separate points in the code where an MSI installation can
+   be launched from, that all differ.  Unify all entry points to use the
+   helper install_msi_on from WindowUtils.
+
+   Simplify the logic in the foss_utils install_a_puppet_msi_on and
+   instead of verifying which command Beaker sends (since the actual
+   code execution is thorougly tested for install_msi_on), simply
+   verify that the proper method is being called
+```
+* (BKR-421) Add WindowsUtils with MSI helper (49920a8b)
+
+
+```
+(BKR-421) Add WindowsUtils with MSI helper
+
+ - Refactor the do_install portion of pe_utils so that it no longer uses
+   the installer_cmd helper when on Windows.  Instead, extract out a new
+   MSI installation helper to WindowsUtils called install_msi_on.
+
+ - install_msi_on expects 4 parameters
+     hosts - to run the installer on
+     msi_path - can be a local path on disk or uri
+     msi_opts - options passed to the installer to configure behavior
+     opts - additional options, currently only :debug to emit the log
+        after installation
+
+ - install_msi_on will generate a batch file and SCP it to the host
+   to avoid any potential command line quoting issues with Cygwin
+   and will properly propagate the msiexec exit code
+
+ - MSI exit codes 0, 1641 and 3010 are acceptable since they may
+   simply indicate a reboot is required
+   install_msi_on will automatically dump the MSI log to the output
+   when a different failure code is encountered
+```
+* (maint) remove errant pe_utils docs for installer_cmd (cae4fc68)
+
+* (BKR-412) clarify 'types' in beaker (72e82f58)
+
+
+```
+(BKR-412) clarify 'types' in beaker
+
+- having made 'aio' a type meant that we were losing pe/foss specific
+  information (like the puppet service)
+- make 'aio' a role that a host can have, meaning that the aio defaults
+  will be installed overtop of any foss/pe defaults
+- stay backwards compatible with some of our weirder test types occuring
+  in the wild (like git-package)
+```
+* (BKR-413) beaker incorrectly reading preview 'LATEST' file (81077e35)
+
+
+```
+(BKR-413) beaker incorrectly reading preview 'LATEST' file
+
+- unable to reproduce bug as reported, but found errors in spec test
+  coverage while poking around.
+```
+* (BKR-414) install_pe_on assumes hosts will be an array (7ac2ca96)
+
+
+```
+(BKR-414) install_pe_on assumes hosts will be an array
+
+- ensure that we only confine to an array of hosts
+```
+* (BKR-410) `confine :except, {}, [host1,host2]` does not work as expected (3a27e489)
+
+
+```
+(BKR-410) `confine :except, {}, [host1,host2]` does not work as expected
+
+- add support to confine to all hosts *except* those in provided host
+  array
+```
+* (BKR-208) - add commandline option, as requested by @anodelman (81139678)
+
+* (BKR-340) separate answer file generation into a library (2a3d9dc5)
+
+
+```
+(BKR-340) separate answer file generation into a library
+
+- remove answer file generation from beaker
+- add dependencies to new beaker-answers gem and stringify-hash
+```
+* (BKR-393) fixed ubuntu PM URLs, didn't match package versions (2b820611)
+
+* (BKR-391) Add fqdn to /etc/hosts (033dc9a8)
+
+* (BKR-349) awsSdk pass-through to make specs more idiomatic and DRY things up (a3e1fa83)
+
+* (BKR-349) Revert "(BKR-349) Clean out unused methods AwsSdk#kill_zombies and AwsSdk#kill_zombie_volumes" (76969db6)
+
+
+```
+(BKR-349) Revert "(BKR-349) Clean out unused methods AwsSdk#kill_zombies and AwsSdk#kill_zombie_volumes"
+
+This reverts commit e2da888de350d9c9f98e0bb20533d61a35ad419e.
+```
+* (BKR-349) Revert "(BKR-349) Remove unused AWS hypervisor method for log_instances" (bc6535ac)
+
+
+```
+(BKR-349) Revert "(BKR-349) Remove unused AWS hypervisor method for log_instances"
+
+This reverts commit b33ae4b49175dc30da71dcdff56045aed9ca7c49.
+```
+* (BKR-208) - Rename option and method to color_host_output, as per suggestion fron @anodelman (02223524)
+
+* (BKR-349) Add specs to test out configuration of /etc/hosts for new instances (ebe312d0)
+
+
+```
+(BKR-349) Add specs to test out configuration of /etc/hosts for new instances
+
+Includes tests for AwsSdk#configure_hosts and AwsSdk#etc_hosts_entry
+```
+* (BKR-349) Add Host#dns_name to spec/helpers.rb host defaults. (b586da67)
+
+* (BKR-349) AwsSdk#configure_hosts now returns nil as api docs indicate (433b9033)
+
+* (BKR-349) Remove redundant entry in spec/helpers.rb host defaults (974bd4a3)
+
+* (BKR-349) Refactor AwsSdk#configure_hosts for improved testability (0b28c5d2)
+
+* (BKR-349) Update yard doc for create_instance to the proper @return type. (1d2b5322)
+
+* (BKR-349) Add specs to test AwsSdk#load_fog_credentials (1d3545d4)
+
+* (BKR-349) Specs added for AwsSdk#create_group (99470010)
+
+* (BKR-349) Specs added for AwsSdk#ensure_group (66eb22fb)
+
+* (BKR-349) Add private ip to host creation in the spec helpers (2b1a1fb8)
+
+* (BKR-349) Stub out remaining simple methods for AwsSdk spec testing (0eb22705)
+
+* (BKR-349) Add new specs for AwsSdk#ensure_key_pair (82231282)
+
+* (BKR-366) merge up install from git changes from deployer and puppet (953423ce)
+
+
+```
+(BKR-366) merge up install from git changes from deployer and puppet
+
+This change merges changes to install_from_git that were overloaded into
+puppet and other repos' acceptance libraries.
+We also split the cloning portion of install_from_git into its own
+method, added options that are passed through to on() and moved a method
+to beaker's acceptance library that needs to be shared across tests
+(install_packages_on).
+This addition of an acceptance library for beaker may require changes to
+the jenkins CI configuration, to add the library to the test-runner's
+load-path.
+The merge-up also brought in helpers for install_from_git,
+build_git_url() and lookup_in_env().
+This change also adds a few more features to build_git_url that were required
+for deployer, including giturl protocol.
+```
+* (BKR-349) Add new specs for AwsSdk#local_user (a280d073)
+
+* (BKR-349) Add new specs for AwsSdk#set_hostnames (1ae376a2)
+
+* (BKR-349) Add new specs for AwsSdk#add_tags (0ee05d39)
+
+* (BKR-349) Add new specs for AwsSdk#wait_for_status (8d331dfc)
+
+* (BKR-349) Clean out unused methods AwsSdk#kill_zombies and AwsSdk#kill_zombie_volumes (e60692eb)
+
+* (BKR-349) Update yard docs with actual return type for AwsSdk#security_groups (dc7401cd)
+
+* (BKR-349) New spec test for AwsSdk#security_groups (bd40500f)
+
+* (BKR-349) Add specs to test AwsSdk#security_group_by_id (5509c3fc)
+
+* (BKR-349) Update yard docs with actual return type for AwsSdk#vpcs (e016a375)
+
+* (BKR-349) New spec test for AwsSdk#vpcs (0c800e52)
+
+* (BKR-349) Add specs to test AwsSdk#vpc_by_id (e13d7e18)
+
+* (BKR-208) - Add spec for preserving SUT host output (97a9a1df)
+
+* (BKR-208) - Add preserve_host_output method, to set allow us to not strip colour for beaker runs (07f06d7b)
+
+* (BKR-349) Add specs to test AwsSdk#instances (b28c39ed)
+
+* (BKR-349) Update yard docs with actual return type for AwsSdk#instances (ce44abac)
+
+* (BKR-349) Add specs to test AwsSdk#instance_by_id (538458a3)
+
+* (BKR-349) Improved specs for AwsSdk#cleanup (68f8a5d4)
+
+* (BKR-349) Fix incorrect key name for access credentials in spec helper for fog creds (90b88e57)
+
+
+```
+(BKR-349) Fix incorrect key name for access credentials in spec helper for fog creds
+
+PS: This still doesn't appear to play nicely when attempting to work with
+resulting instance objects. Seems like it has to be mocked any time it digs
+into the aws lib.
+```
+* (BKR-349) Remove unused AWS hypervisor method for log_instances (16d506ef)
+
+* (BKR-349) Add spec tests for AWS hypervisor cleanup method (6f3c8fa8)
+
+* (BKR-349) Add spec tests for AwsSdk#kill_instances (72c53781)
+
+* (BKR-349) Add tests for AwsSdk#provision (3fbb8a3e)
+
+* (BKR-349) Stub out describes for missing method tests (784102ff)
+
+* (BKR-349) Clean up describe/context naming for existing tests (147e78aa)
+
+* (BKR-349) Sort tests based on method appearance (e1920ade)
+
+### <a name = "2.18.3">2.18.3 - 28 Jul, 2015 (d9a02474)
+
+* (HISTORY) update beaker history for gem release 2.18.3 (d9a02474)
+
+* (GEM) update beaker version to 2.18.3 (c0553c0c)
+
+* Merge pull request #908 from kevpl/bkr424_windows_doubleslash (cec8965d)
+
+
+```
+Merge pull request #908 from kevpl/bkr424_windows_doubleslash
+
+(BKR-424) eliminated extra '/' on windows download URL
+```
+* (BKR-424) eliminated extra '/' on windows download URL (6b9735e0)
+
+### <a name = "2.18.2">2.18.2 - 27 Jul, 2015 (c84f6f23)
+
+* (HISTORY) update beaker history for gem release 2.18.2 (c84f6f23)
+
+* (GEM) update beaker version to 2.18.2 (15c0496b)
+
+* Merge pull request #894 from anodelman/shallow (d2860c7a)
+
+
+```
+Merge pull request #894 from anodelman/shallow
+
+(BKR-405) The "install_pe" DSL Method Fails to Install SG...
+```
+* Merge pull request #880 from petems/BKR-326-fix_freebsd_install (6383f3d6)
+
+
+```
+Merge pull request #880 from petems/BKR-326-fix_freebsd_install
+
+(BKR-326) Fixes FreeBSD install to use ports
+```
+* Merge pull request #896 from bstopp/master (35f8e63e)
+
+
+```
+Merge pull request #896 from bstopp/master
+
+(BKR-417) Add support for specifying # of CPUs in VirtualBox
+```
+* Merge pull request #900 from ferventcoder/maint/issue/start-wait-winrm (f8f01651)
+
+
+```
+Merge pull request #900 from ferventcoder/maint/issue/start-wait-winrm
+
+(maint) Always wait for Windows agent installs
+```
+* Merge pull request #901 from justinstoller/bug/master/bkr-420_no-more-latest (282371b4)
+
+
+```
+Merge pull request #901 from justinstoller/bug/master/bkr-420_no-more-latest
+
+(BKR-420) Allow easily installing latest puppet-agent
+```
+* (BKR-420) Allow easily installing latest puppet-agent (460a6247)
+
+
+```
+(BKR-420) Allow easily installing latest puppet-agent
+
+Prior to this we were over eagerly failing if there was no puppet-agent
+version explicitly set.  Having install_puppet_agent install the latest
+released version of puppet-agent is a desired and common workflow.
+
+This patch removes the aggressive failing on non-specified puppet-agent
+versions in `install_puppet_agent_on`
+```
+* (maint) use type over cat in pure Windows (f53a9f6d)
+
+
+```
+(maint) use type over cat in pure Windows
+
+If the host is not a cygwin environment, prefer `type` to produce the
+contents of the log file over `cat`. `type` is built-in, where `cat` is
+only available if someone has put *nix tools on the path, whether
+through a git install (MinGW tools), installing GnuWin utils or some
+other method.
+```
+* (maint) Always wait for Windows agent installs (c8cb9384)
+
+
+```
+(maint) Always wait for Windows agent installs
+
+When installing Windows agents with cygwin or any other means, always
+prefer `start /w` over just calling msiexec.
+
+This adds to what was first introduced in 9c32cac7a7a5bf.
+```
+* Merge branch 'master' of github.com:bstopp/beaker (4452e5a9)
+
+* Merge pull request #889 from spjmurray/bkr_401_os_volume_races (5c17bca4)
+
+
+```
+Merge pull request #889 from spjmurray/bkr_401_os_volume_races
+
+(BKR-401) fix race in OpenStack volume deletion
+```
+* Merge pull request #892 from petems/maint_move_vb_vagrant_out_of_disk_path (17fe242f)
+
+
+```
+Merge pull request #892 from petems/maint_move_vb_vagrant_out_of_disk_path
+
+(maint) Moves various VB options out of `disk_path` logic
+```
+* Merge pull request #812 from bodgit/openbsd (e37685d0)
+
+
+```
+Merge pull request #812 from bodgit/openbsd
+
+(BKR-249) Add OpenBSD support
+```
+* Merge pull request #898 from kevpl/bkr415_acceptance_fix (888788a9)
+
+
+```
+Merge pull request #898 from kevpl/bkr415_acceptance_fix
+
+(BKR-415) re-targeted puppet_pkg acceptance from 3.7.5 -> 3.8.1
+```
+* (BKR-415) re-targeted puppet_pkg acceptance from 3.7.5 -> 3.8.1 (c37cc8d7)
+
+* This patch adds support for configuring the number of CPUs for (c3fae736)
+
+
+```
+This patch adds support for configuring the number of CPUs for
+vagrant VirtualBox instances. The `vagrant_cpus` config option is
+used to set the value.
+```
+* (BKR-417) This patch adds support for configuring the number of CPUs for (837fe37e)
+
+
+```
+(BKR-417) This patch adds support for configuring the number of CPUs for
+vagrant VirtualBox instances. The `vagrant_cpus` config option is
+used to set the value.
+```
+* (BKR-405) The "install_pe" DSL Method Fails to Install SG... (c31f2d9d)
+
+
+```
+(BKR-405) The "install_pe" DSL Method Fails to Install SG...
+
+...if "Latest-win" Version File is Missing
+
+- do not attempt to determine windows pe_ver if master version is
+  greater than 3.99, just inherit from the master (if it exists)
+- there's probably more edge cases here, but I don't believe that
+  install_pe can handle every combinations of platforms/versions
+```
+* (maint) Moves out of `disk_path` logic... (c8f98aa6)
+
+
+```
+(maint) Moves out of `disk_path` logic...
+
+Looks like these got moved into the `if` logic for `disk_path` accidentally around v2.8. This means that you can no longer use these options without adding disk_path logic in later versions of Beaker. This moves them back into their own section.
+```
+* (BKR-401) fix race in OpenStack volume deletion (b93046ed)
+
+
+```
+(BKR-401) fix race in OpenStack volume deletion
+
+There is a delay between a volume being detached from a virtual machine and
+when it is ready to be deleted.  The code as it stands is likely to hit a 400
+error as the volume is still in the 'detaching' state.  Add in a wait_for
+statement to allow the volume to get back into the 'available' state before
+deleting
+```
+* (BKR-326) Fixes FreeBSD install to use ports (a0d47d14)
+
+
+```
+(BKR-326) Fixes FreeBSD install to use ports
+
+* Adds helper method to `FreeBSD:Pkg` to install packages on FreeBSD using ports with sensible default arguments
+```
+* (BKR-249) Add OpenBSD support (3f72ecfc)
+
+
+```
+(BKR-249) Add OpenBSD support
+
+Add install method to prefer installing the OpenBSD-maintained Puppet package
+which tends to work better than vanilla gem versions. Also add enough smarts
+to be able to do gem installations. The shell is not a login shell therefore
+it doesn't pick up the .profile that contains the PKG_PATH variable so pkg_add
+doesn't automatically install from the network so add the PKG_PATH to the
+.ssh/environment too.
+
+The packaging support handles the case when there are multiple rubies
+available. Currently it will install the newest in the list that is older than
+2.2.x as that doesn't work with all versions of Puppet. Also, if installing the
+package advises to create symlinks to make this package the default, perform
+this step automatically. This handles for example when installing ruby-1.9.3
+and all the commands have a 19 suffix, etc.
+```
+### <a name = "2.18.1">2.18.1 - 14 Jul, 2015 (6a82f99f)
+
+* (HISTORY) update beaker history for gem release 2.18.1 (6a82f99f)
+
+* (GEM) update beaker version to 2.18.1 (f9939536)
+
+* Merge pull request #891 from anodelman/shallow (c4b30018)
+
+
+```
+Merge pull request #891 from anodelman/shallow
+
+(BKR-402) Regression in Beaker 2.18.0 AIO testing for PuppetDB usage
+```
+* Merge pull request #890 from justinstoller/bug/master/BKR-403_sless (e52b0af4)
+
+
+```
+Merge pull request #890 from justinstoller/bug/master/BKR-403_sless
+
+(BKR-403) Use rpm on sles for pe puppet-agent
+```
+* (BKR-402) Regression in Beaker 2.18.0 AIO testing for PuppetDB usage (8c262979)
+
+
+```
+(BKR-402) Regression in Beaker 2.18.0 AIO testing for PuppetDB usage
+
+- provide a sane default for puppetservice for aio defaults, but allow
+  override with a user setting
+```
+* (BKR-403) Use rpm on sles for pe puppet-agent (6acd9938)
+
+
+```
+(BKR-403) Use rpm on sles for pe puppet-agent
+
+In BKR-397 we updated rpm using platforms to use yum instead of rpm in
+the install_puppet_agent_pe_promoted_repo, however it wasn't noticed
+that SLES was also an rpm using platform in the match that doesn't also
+include yum.
+
+This patch moves SLES platforms into their own branch of logic that uses
+the old rpm installation method while retaining the yum based
+installation for other platforms.
+```
+### <a name = "2.18.0">2.18.0 - 13 Jul, 2015 (e018f2fc)
+
+* (HISTORY) update beaker history for gem release 2.18.0 (e018f2fc)
+
+* (GEM) update beaker version to 2.18.0 (268ce21e)
+
+* Merge pull request #887 from kevpl/bkr394_aio_mixedinstall (28f9d26d)
+
+
+```
+Merge pull request #887 from kevpl/bkr394_aio_mixedinstall
+
+(BKR-394) added support for 3.8/AIO mixed installations
+```
+* Merge pull request #888 from justinstoller/maint/master/BKR-397_use_yum (a76abdd9)
+
+
+```
+Merge pull request #888 from justinstoller/maint/master/BKR-397_use_yum
+
+(BKR-397) Use yum for installing pe promoted puppet-agent
+```
+* (BKR-397) Use yum for installing pe promoted puppet-agent (d6d37145)
+
+
+```
+(BKR-397) Use yum for installing pe promoted puppet-agent
+
+Previously we used the rpm command to install a local rpm file. However
+puppet-agent requires dmidecode for EL platforms and this dependency
+won't be resolved by using rpm.
+
+This commit uses yum's localinstal command to install the local rpm file
+so that dependencies are resolved.
+```
+* Merge pull request #858 from spjmurray/openstack_cinder_volumes (f5ecb177)
+
+
+```
+Merge pull request #858 from spjmurray/openstack_cinder_volumes
+
+(BKR-347) Openstack: Add support for cinder attached volumes
+```
+* (BKR-394) added support for 3.8/AIO mixed installations (d715cb1d)
+
+* Merge pull request #881 from anodelman/env-support (788aae5c)
+
+
+```
+Merge pull request #881 from anodelman/env-support
+
+(BKR-387) environment not being preserved between ssh connections...
+```
+* (BKR-387) environment not being preserved between ssh connections... (41e64c50)
+
+
+```
+(BKR-387) environment not being preserved between ssh connections...
+
+... on debian
+
+- mirror the env to /etc/profile.d/beaker_env.sh
+- add and acceptance test to ensure that environment variables are
+  preserved between ssh connections for a SUT
+```
+* (BKR-347) Openstack: Add support for cinder attached volumes (4c2c5f23)
+
+
+```
+(BKR-347) Openstack: Add support for cinder attached volumes
+
+Implement the storage array feature introduced for vagrant virtual box
+to OpenStack users.  Unlike virtual box the bus type is outside of our
+control.  If you need SCSI support this must be attached to the image
+in glance.  How to do this is in the method documentation
+```
+### <a name = "2.17.0">2.17.0 - 10 Jul, 2015 (aaac4771)
+
+* (HISTORY) update beaker history for gem release 2.17.0 (aaac4771)
+
+* (GEM) update beaker version to 2.17.0 (745d9116)
+
+* Merge pull request #884 from justinstoller/maint/master/moar-puppet-agent (7ba09f8f)
+
+
+```
+Merge pull request #884 from justinstoller/maint/master/moar-puppet-agent
+
+(maint) Allow PE puppet-agent installs on custom roles
+```
+* (maint) Allow PE puppet-agent installs on custom roles (cfe9c834)
+
+
+```
+(maint) Allow PE puppet-agent installs on custom roles
+
+Previously we installed puppet-agent on a host if there was the agent
+role and no other role assigned to it. This prevents assigning a
+puppet-agent node the "default" role to be used as the default test
+target, or allow any other custom roles.
+
+To allow assigning the "default" or custom roles to a puppet-agent node
+we list the non-puppet-agnet roles we know how to generate installation answers
+for and use that list to determine what nodes are puppet-agent or not.
+```
+* Merge pull request #883 from anodelman/puppetservice (2822e415)
+
+
+```
+Merge pull request #883 from anodelman/puppetservice
+
+(BKR-390) Scooter pipeline is using pe-httpd instead of pe-puppetserver
+```
+* Merge pull request #882 from anodelman/osx (b64ee262)
+
+
+```
+Merge pull request #882 from anodelman/osx
+
+(BKR-388) Beaker::Host::Mac#touch returns non-existent path
+```
+* Merge pull request #879 from anodelman/maint (df169767)
+
+
+```
+Merge pull request #879 from anodelman/maint
+
+(BKR-386) beaker does not work with host_preserved.yaml file anymore
+```
+* (BKR-390) Scooter pipeline is using pe-httpd instead of pe-puppetserver (3a7830cc)
+
+
+```
+(BKR-390) Scooter pipeline is using pe-httpd instead of pe-puppetserver
+
+- only use aio defaults on agents that are not master, database or
+  dashboard (was previously using aio defaults/paths on all hosts
+  identified as being >= 4.0)
+```
+* (BKR-388) Beaker::Host::Mac#touch returns non-existent path (21e885e0)
+
+
+```
+(BKR-388) Beaker::Host::Mac#touch returns non-existent path
+
+- ensure that the mac host.touch method returns a correct, absolute
+  path to the touch command
+```
+* Merge pull request #859 from vindir/feature/instancestores (a3429c39)
+
+
+```
+Merge pull request #859 from vindir/feature/instancestores
+
+(BKR-348) AWS: Adding instance storage support
+```
+* (BKR-386) beaker does not work with host_preserved.yaml file anymore (c1b471fc)
+
+
+```
+(BKR-386) beaker does not work with host_preserved.yaml file anymore
+
+- puppet-agent installation was causing a 'version' argument to be added
+  to the preserved host file, causing beaker to output --version
+  information upon re-use of that file
+- fix is just renaming --version to use beaker_version instead of
+  version as a flag
+```
+* (BKR-348) instance storage now supported (e607b2d5)
+
+
+```
+(BKR-348) instance storage now supported
+
+AMIs using the instance storage root device type are now supported
+allowing users who don't want/need EBS backed AMIs to add nodesets
+more easily.
+```
+### <a name = "2.16.0">2.16.0 - 6 Jul, 2015 (b3e76227)
+
+* (HISTORY) update beaker history for gem release 2.16.0 (b3e76227)
+
+* (GEM) update beaker version to 2.16.0 (6b0a9ca2)
+
+* Merge pull request #876 from anodelman/shallow (6edc61fe)
+
+
+```
+Merge pull request #876 from anodelman/shallow
+
+(BKR-383) puppet-agent dmg installation doesn't work for anything...
+```
+* Merge pull request #877 from anodelman/osx (35d266b0)
+
+
+```
+Merge pull request #877 from anodelman/osx
+
+(BKR-384) & (BKR-385) support for dev puppet-agent installation on osx
+```
+* Merge pull request #878 from anodelman/maint (c011ff05)
+
+
+```
+Merge pull request #878 from anodelman/maint
+
+(MAINT) bad hardcoded 'debian' in puppet-agent promoted installation
+```
+* Merge pull request #856 from kevpl/bkr336_executiontime_add (fbe5b300)
+
+
+```
+Merge pull request #856 from kevpl/bkr336_executiontime_add
+
+(BKR-336) added command-line arg to get test results in timing order
+```
+* (MAINT) bad hardcoded 'debian' in puppet-agent promoted installation (441de9ea)
+
+
+```
+(MAINT) bad hardcoded 'debian' in puppet-agent promoted installation
+
+- should use #{variant} and not hardcoded debian, otherwise pukes on
+  ubuntu
+```
+* (BKR-384) install_puppet_agent_dev_repo needs to support osx (9772fcfb)
+
+
+```
+(BKR-384) install_puppet_agent_dev_repo needs to support osx
+
+- able to install dev puppet-agent on osx
+
+example:
+
+install_puppet_agent_dev_repo_on(host,
+   { :puppet_agent_sha => 'c2946821d1bcd7e43a34bd1f9cd2f86160ca4fe0',
+     :puppet_agent_version => '1.2.1.23.gc294682'    })
+```
+* (BKR-385) beaker needs to be able to convert mac codename to... (dee9b7c6)
+
+
+```
+(BKR-385) beaker needs to be able to convert mac codename to...
+
+...version number
+
+- add support to the platform object to handle yosemite -> 10.10 and
+  mavericks -> 10.9 conversions for osx variant
+```
+* Merge pull request #875 from anodelman/puppet-agent (0a4318a2)
+
+
+```
+Merge pull request #875 from anodelman/puppet-agent
+
+(BKR-377) Installing the Latest Puppet Agent Package
+```
+* (BKR-383) puppet-agent dmg installation doesn't work for anything... (6361cd78)
+
+
+```
+(BKR-383) puppet-agent dmg installation doesn't work for anything...
+
+... other than 'latest'
+
+- fix up the url construction for downloading a release mac puppet-agent
+- tested locally
+- there currently is not puppet-agent-latest.dmg file, so that won't
+  work until that is posted
+```
+* Merge pull request #861 from logicminds/BKR-365 (c6bcdc9c)
+
+
+```
+Merge pull request #861 from logicminds/BKR-365
+
+BKR-365 - allow beaker to use ssh config with rsync
+```
+* Merge pull request #867 from anodelman/hypervisor-acceptance (20e12ca7)
+
+
+```
+Merge pull request #867 from anodelman/hypervisor-acceptance
+
+(BKR-367) create beaker ec2 smoketest
+```
+* Merge pull request #866 from kevpl/bkr318_f5_added (2cedf59a)
+
+
+```
+Merge pull request #866 from kevpl/bkr318_f5_added
+
+(BKR-318) added platform support for f5
+```
+* Merge pull request #871 from anodelman/answers (66b3d8e1)
+
+
+```
+Merge pull request #871 from anodelman/answers
+
+(BKR-370) beaker doesn't use answers set as env vars
+```
+* (BKR-377) Installing the Latest Puppet Agent Package (ffaada1e)
+
+
+```
+(BKR-377) Installing the Latest Puppet Agent Package
+
+- support 'latest' as puppet_agent_version in
+  install_puppet_agent_pe_promoted_on
+- default to 'latest' for
+  install_puppet_agent_pe_promoted_on::puppet_agent_version
+```
+* Merge pull request #873 from anodelman/shallow (a14f1624)
+
+
+```
+Merge pull request #873 from anodelman/shallow
+
+(BKR-376) better interface to install puppet-agent through install_pe
+```
+* Merge pull request #874 from anodelman/maint (a0959a20)
+
+
+```
+Merge pull request #874 from anodelman/maint
+
+(BKR-378) RHEL4 runs fail due to the absence of yum
+```
+* (BKR-378) RHEL4 runs fail due to the absence of yum (e7276d32)
+
+
+```
+(BKR-378) RHEL4 runs fail due to the absence of yum
+
+- regression: accidentally changed as a ride along to puppet-agent installation
+  work, return to correct state
+```
+* (BKR-376) better interface to install puppet-agent through install_pe (bfb9f006)
+
+
+```
+(BKR-376) better interface to install puppet-agent through install_pe
+
+- standardize on parameter names puppet_agent_version, puppet_agent_sha
+- if no puppet_agent_sha is provided default to puppet_agent_version
+- support new env vars
+  * BEAKER_PUPPET_AGENT_VERSION
+  * BEAKER_PUPPET_AGENT_SHA
+  * BEAKER_PUPPET_COLLECTION
+
+- examples (puppet-agent installation):
+  install_puppet_agent_on(host, { :version => '1.1.0', :default_action => 'gem_install'})
+  install_puppet_agent_dev_repo_on(host, { :puppet_agent_sha => 'd3377feaeac173aada3a2c2cedd141eb610960a7', :puppet_agent_version => '1.1.1.225.gd3
+377fe'  })
+  install_puppet_agent_pe_promoted_repo_on(host, { :puppet_agent_sha => '1.1.0.227', :puppet_agent_version => '1.1.0.227.g1d8334c', :pe_ver => '4.0
+.0-rc1'})
+
+- using install_pe/install_pe_on (for versions of PE > 4.0)
+set the puppet-agent version through an env var:
+  export BEAKER_PUPPET_AGENT_VERSION=1.2.0
+can then just call:
+  install_pe or install_pe_on(hosts, options)
+
+set the puppet-agent version through the options hash
+  options[:puppet_agent_version] = '1.2.0'
+  install_pe
+```
+* (BKR-370) beaker doesn't use answers set as env vars (521780ec)
+
+
+```
+(BKR-370) beaker doesn't use answers set as env vars
+
+- not correctly using 'answer_for' to determine if there is a provided
+  value for all questions
+- fixed up some variable naming for clarity
+```
+* (BKR-367) create beaker ec2 smoketest (56aa9438)
+
+
+```
+(BKR-367) create beaker ec2 smoketest
+
+- add acceptance/tests/hypervisor/communication.rb, checks to ensure
+  that hosts can ping each other
+- enable ping for aws ec2 instances created by beaker
+- create host.ping method to ping from host to a second host, return
+  'true' when ping is successful, 'false' otherwise
+```
+* (BKR-318) added platform support for f5 (308cb672)
+
+* BKR-365 - allow beaker to use ssh config with rsync (691823fc)
+
+
+```
+BKR-365 - allow beaker to use ssh config with rsync
+
+   * fixes a bug that vagrant introduced when using dynamic ssh configs
+```
+* (BKR-336) added command-line arg to get test results in timing order (806ff012)
+
+
+```
+(BKR-336) added command-line arg to get test results in timing order
+
+The new argument will allow a second beaker_*.xml file to be
+created next to the first one in timing order.
+
+Conflicts:
+	lib/beaker/options/command_line_parser.rb
+```
+### <a name = "2.15.1">2.15.1 - 1 Jul, 2015 (cd6f0bab)
+
+* (HISTORY) update beaker history for gem release 2.15.1 (cd6f0bab)
+
+* (GEM) update beaker version to 2.15.1 (eb1f373a)
+
+* Merge pull request #872 from anodelman/maint (3c2a8179)
+
+
+```
+Merge pull request #872 from anodelman/maint
+
+(BKR-374) apt/yum.puppetlabs use 'pc1' not 'PC1'
+```
+* (BKR-374) apt/yum.puppetlabs use 'pc1' not 'PC1' (358fcad4)
+
+### <a name = "2.15.0">2.15.0 - 1 Jul, 2015 (07c416fb)
+
+* (HISTORY) update beaker history for gem release 2.15.0 (07c416fb)
+
+* (GEM) update beaker version to 2.15.0 (4b71df0e)
+
+* Merge pull request #869 from kevpl/bkr253_installpe_pe_aio_url (b243648e)
+
+
+```
+Merge pull request #869 from kevpl/bkr253_installpe_pe_aio_url
+
+(BKR-253) install_pe_on uses pe_promoted puppet-agent for 4.0+
+```
+* (BKR-253) install_pe_on uses pe_promoted puppet-agent for 4.0+ (c0d47643)
+
+* Merge pull request #860 from anodelman/shallow (11f9a9ba)
+
+
+```
+Merge pull request #860 from anodelman/shallow
+
+(BKR-323) Allow install_puppet_agent_on to support "pe only" platforms
+```
+* Merge pull request #862 from anodelman/support-date-version (dbc4b535)
+
+
+```
+Merge pull request #862 from anodelman/support-date-version
+
+(BKR-344) Support year.release versioning (e.g. 2015.2)
+```
+* Merge pull request #863 from anodelman/maint (b444c507)
+
+
+```
+Merge pull request #863 from anodelman/maint
+
+(MAINT) add spec testing to option parsing prioritization
+```
+* (BKR-352) Beaker install_puppet_agent_on helper does not... (521e4791)
+
+
+```
+(BKR-352) Beaker install_puppet_agent_on helper does not...
+
+...respect the host install_32 or ruby_arch setting on Windows
+
+- install x86 msi when
+  * host['install_32'] == true
+  * opts['install_32'] == true
+  * host['ruby_arch'] == 'x86'
+  * host.is_x86_64? == false
+- install x64 msi when
+  * (host.is_x86_64? == true) && !host['install_32'] &&
+      !opts['install_32'] && !(host['ruby_arch'] == 'x86')
+```
+* (MAINT) add spec testing to option parsing prioritization (701c5aed)
+
+
+```
+(MAINT) add spec testing to option parsing prioritization
+
+- make sure that we are sorting through env variables, command line
+  arguments, host file options, options file argument and presets
+  correctly
+```
+* (BKR-344) Support year.release versioning (e.g. 2015.2) (048e6708)
+
+
+```
+(BKR-344) Support year.release versioning (e.g. 2015.2)
+
+- update semver matching to understand that 3.0.0 < 2015.3.0.0
+- update answer file generation to provide 4.0 answers for version 2015+
+```
+* Merge pull request #855 from bstopp/bug/copy_module_to_mv_fix (9631b55a)
+
+
+```
+Merge pull request #855 from bstopp/bug/copy_module_to_mv_fix
+
+(BKR-339) Remove the target module directory on host during copy_module_to
+```
+* Merge pull request #853 from kevpl/bkr319_installpe_puppetagent (6ddec170)
+
+
+```
+Merge pull request #853 from kevpl/bkr319_installpe_puppetagent
+
+(BKR-319) added puppet-agent install for install_pe for versions over 4.0
+```
+* Merge pull request #851 from madAndroid/BKR-314-idempotent-EL-install-release-repo (d7fccf8f)
+
+
+```
+Merge pull request #851 from madAndroid/BKR-314-idempotent-EL-install-release-repo
+
+(BKR-314) Ensure install_puppetlabs_release_repo is idempotent for EL
+```
+* (BKR-319) review feedback refactor (4b7235ec)
+
+* (BKR-323) Allow install_puppet_agent_on to support "pe only" platforms (cc906f1d)
+
+
+```
+(BKR-323) Allow install_puppet_agent_on to support "pe only" platforms
+
+- support both pm.puppetlabs.com and builds.puppetlabs.com for
+  downloading puppet-agent
+- use install_puppet_agent_on for yum|apt.puppetlabs.com
+- use install_puppet_agent_dev_repo_on for builds.puppetlabs.com
+- use install_puppet_agent_pe_promoted_repo_on for pm.puppetlabs.com
+
+example usage:
+  install_puppet_agent_on(host, { :version => '1.1.0', :default_action => 'gem_install'})
+  install_puppet_agent_dev_repo_on(host, { :sha => 'd3377feaeac173aada3a2c2cedd141eb610960a7', :version => '1.1.1.225.gd3377fe'  })
+  install_puppet_agent_pe_promoted_repo_on(host, { :sha => '1.1.0.227', :version => '1.1.0.227.g1d8334c', :pe_ver => '4.0.0-rc1'})
+```
+* Merge pull request #844 from kevpl/bkr53_withpuppetrunningon_restart (36c9ae20)
+
+
+```
+Merge pull request #844 from kevpl/bkr53_withpuppetrunningon_restart
+
+(BKR-53) with_puppet_running_on only restarts before yielding
+```
+* (BKR-339) Remove the target module directory on host during copy_module_to (1d1d7eb6)
+
+
+```
+(BKR-339) Remove the target module directory on host during copy_module_to
+
+Without this patch, the copy_module_to function will not work correctly to copy updated module files into the target directory on the hosts. Instead accpetance test spec files can be updated, but not module sources. Additionally the module copy will fail on the second non-provisioning run.
+
+The patch simply executes a delete of the target directory on the host, ensuring it does not exist prior to the mv command.
+```
+* Merge pull request #847 from anodelman/fail-fast (923c7857)
+
+
+```
+Merge pull request #847 from anodelman/fail-fast
+
+(BKR-322) --fail-mode fast doesn't seem to be failing fast
+```
+* (BKR-319) added puppet-agent install for install_pe for versions over 4.0 (2749c051)
+
+* Merge pull request #850 from anodelman/aio-paths (19511298)
+
+
+```
+Merge pull request #850 from anodelman/aio-paths
+
+(BKR-325) AIO detection for install_puppet() and install_pe()
+```
+* Merge pull request #846 from anodelman/shallow (b00942f0)
+
+
+```
+Merge pull request #846 from anodelman/shallow
+
+(BKR-317) More usable configure_foss_defaults_on
+```
+* Merge pull request #848 from petems/BKR-326-fix_freebsd_ssh_root_setup (3491f13d)
+
+
+```
+Merge pull request #848 from petems/BKR-326-fix_freebsd_ssh_root_setup
+
+(BKR-326) Fixes enabling user environments
+```
+* Merge pull request #839 from vindir/feature/aws_ip_failover (837b2673)
+
+
+```
+Merge pull request #839 from vindir/feature/aws_ip_failover
+
+(BKR-311) Allow AWS IP Fallback
+```
+* (BKR-326) Adds requirement of perl for FreeBSD (476b3860)
+
+
+```
+(BKR-326) Adds requirement of perl for FreeBSD
+
+Makes regex sed replacement easier
+```
+* BKR-314 - expect more explicit rpm command - with --replacepkgs (cca0046e)
+
+* BKR-314 - Use --replacepkgs to ensure repo install is idempotent (dd73ca21)
+
+* (BKR-325) AIO detection for install_puppet() and install_pe() (8e6347ab)
+
+
+```
+(BKR-325) AIO detection for install_puppet() and install_pe()
+
+- check the pe_ver/version to see if aio pathing should be installed
+  instead of foss/pe
+```
+* (BKR-326) Adds FreeBSD specs for root login enable (a8ffadbe)
+
+* (BKR-326) Fixes enabling user environments (e5bc2451)
+
+
+```
+(BKR-326) Fixes enabling user environments
+
+Currently this step uses `echo_to_file`, which actually overwrites the file with the one line. This changes it to use the perl regex instead.
+```
+* (BKR-322) --fail-mode fast doesn't seem to be failing fast (7dfb56e0)
+
+
+```
+(BKR-322) --fail-mode fast doesn't seem to be failing fast
+
+- was using the default value instead of the setting value
+```
+* (BKR-317) More usable configure_foss_defaults_on (74df91d1)
+
+
+```
+(BKR-317) More usable configure_foss_defaults_on
+
+- add support for remove_defaults_on
+- add some spec test coverage
+```
+* Merge pull request #828 from kevpl/bkr220_tagging_add (5f71cdb3)
+
+
+```
+Merge pull request #828 from kevpl/bkr220_tagging_add
+
+(BKR-220) test tagging implemented
+```
+* (BKR-317) More usable configure_foss_defaults_on (12c51454)
+
+
+```
+(BKR-317) More usable configure_foss_defaults_on
+
+- create configure_defaults_on that provided a type sets the correct
+  defaults per-host, will also remove any existing defaults
+```
+* Merge pull request #845 from kevpl/bkr320_answers_40nilproblems (56fbc872)
+
+
+```
+Merge pull request #845 from kevpl/bkr320_answers_40nilproblems
+
+(BKR-320) added nil-check so we don't call methods on empty answer maps
+```
+* (BKR-320) added nil-check so we don't call methods on empty answer maps (2d38a720)
+
+* (BKR-53) with_puppet_running_on can not restart after yielding (9da3b99f)
+
+
+```
+(BKR-53) with_puppet_running_on can not restart after yielding
+
+Before, with_puppet_running_on bounced the puppet service before and after runs.
+This was causing us a lot of pain as the last restart proved unnecessary for the
+most part, and added 30 seconds to each test run on avg in our CI.
+
+We've decided to improve this by adding the ability to remove the second bounce.
+Mosts tests use `with_puppet_running_on`, so they'll be setup accordingly before
+yielding, so that second one is unnecessary.
+```
+* (BKR-311) Allow AWS IP Fallback (098daef0)
+
+
+```
+(BKR-311) Allow AWS IP Fallback
+
+When bringing up an instance in a VPC there won't always be a public address.
+This allows the AWS hypervisor to fallback and assign an instance's private
+ip to host['ip'] for new instances without a public address.
+
+This PR includes tests for the .AwsSdk#populate_dns method to verify this new
+behavior persists in the future.
+```
+* (BKR-220) test tagging implemented (f41c29f9)
+
+### <a name = "2.14.1">2.14.1 - 5 Jun, 2015 (35026603)
+
+* (HISTORY) update beaker history for gem release 2.14.1 (35026603)
+
+* (GEM) update beaker version to 2.14.1 (8539687f)
+
+* Merge pull request #842 from anodelman/fix-puppetservice-default (28a4ef9c)
+
+
+```
+Merge pull request #842 from anodelman/fix-puppetservice-default
+
+(BKR-313) Beaker is using pe-httpd as the puppet master service...
+```
+* Merge pull request #841 from kevpl/bkr295_ubuntu_stopagenton_fix (eb8cc39c)
+
+
+```
+Merge pull request #841 from kevpl/bkr295_ubuntu_stopagenton_fix
+
+(BKR-295) use 'puppet' in stop_agent_on for 4.0+
+```
+* (BKR-313) Beaker is using pe-httpd as the puppet master service... (a27eb5ae)
+
+
+```
+(BKR-313) Beaker is using pe-httpd as the puppet master service...
+
+... in method 'with_puppet_running_on'
+
+- use pe-httpd pre 3.4, pe-puppetserver post 3.4
+```
+* (BKR-295) use 'puppet' in stop_agent_on for 4.0+ (9604315c)
+
+### <a name = "2.14.0">2.14.0 - 4 Jun, 2015 (c0ebcd16)
+
+* (HISTORY) update beaker history for gem release 2.14.0 (c0ebcd16)
+
+* (GEM) update beaker version to 2.14.0 (656f30be)
+
+* Merge pull request #837 from justinstoller/maint/master/bkrsomethingsomething (0d0ceab9)
+
+
+```
+Merge pull request #837 from justinstoller/maint/master/bkrsomethingsomething
+
+[WIP] add install_puppet_agent_on method to install_utils
+```
+* Merge pull request #836 from rick/bkr-301/add-warning-when-empty-fog-file-is-encountered (0d102203)
+
+
+```
+Merge pull request #836 from rick/bkr-301/add-warning-when-empty-fog-file-is-encountered
+
+[BKR-301] add warning when empty fog file is encountered
+```
+* Merge pull request #838 from thallgren/master (4e8be4e2)
+
+
+```
+Merge pull request #838 from thallgren/master
+
+(maint) Fix typo Error -> Errno
+```
+* (maint) Fix typo Error -> Errno (670b1509)
+
+* (BKR-195) Simplified install of released puppet-agent (fcac8e03)
+
+
+```
+(BKR-195) Simplified install of released puppet-agent
+
+Previously installing the puppet-agent package required writing a
+pre-suite to manually install the correct dev repositories and
+installing a dev build of puppet-agent.
+
+This is problematic for downstream consumers that do not want to test
+puppet-agent or the code in it, but want to test that their code works
+with puppet-agent (eg module authors).
+
+This commit creates the DSL method `install_puppet_agent_on()`, an
+analog to the `install_puppet_on()` method that allows installing
+puppet-agent.
+
+It also allows the `install_puppet()` method to install puppet-agent if
+given a version of Puppet greater than 4.0.0 (by delegating to
+`install_puppet_agent_on()`).
+
+Errata:
+ * Follows the pattern of naming helpers `*_on` and
+   normalizes the helpers it touches to follow the same pattern.
+ * Updates the MSI and DMG methods to allow for latest builds
+   (prior to this they required explicit versions and so were rarely
+   used even by our internal teams).
+ * Also updates legacy puppet MSI and DMG install helpers to
+   delegate to newer install puppet-agent helpers using the same
+   criteria as used in `install_puppet_on()` (despite being marked as
+   api private they are used internally).
+ * Uses newer `install_puppetlabs_release_repo_on` and
+   `Host#install_package` and updates old helpers to do the same
+```
+* Merge pull request #833 from thallgren/issue/bkr-304/redundant-scp-copying (adb9c37a)
+
+
+```
+Merge pull request #833 from thallgren/issue/bkr-304/redundant-scp-copying
+
+(BKR-304) Prevent redundant copying when doing scp
+```
+* Merge pull request #796 from fiddyspence/bug/rsync_fails_with_docker (82286b54)
+
+
+```
+Merge pull request #796 from fiddyspence/bug/rsync_fails_with_docker
+
+(BKR-226) - rsync fails because of NATted ports
+```
+* (BKR-301) Add "happy path" tests for credential loading (22c39286)
+
+
+```
+(BKR-301) Add "happy path" tests for credential loading
+
+Since we've tested that `#load_credentials` behaves ok during hard times, let's
+actually test that it does what it's supposed to do.
+```
+* (BKR-301) Tests and code for empty fog file case (d33ac6d6)
+
+
+```
+(BKR-301) Tests and code for empty fog file case
+
+Numerous small refactorings in `#load_credentials` after getting the test green.
+```
+* (BKR-301) New test and testing seams (bf8a9a26)
+
+
+```
+(BKR-301) New test and testing seams
+
+This splits off tests for #load_credentials, as we have untested
+behavior there, and the point of this work is to fix a mis-feature
+in that area (not catching the hard-to-decipher exception when
+an empty fog file is presented).  The main tests all stub out the
+fog file loading, so here we introduce a different stub.
+
+This also modifies the `Vmpooler` class to split out a testing seam:
+the `#read_fog_file` method can be stubbed now independently of the
+`#load_credentials method`, so we can feed in post-YAML output to
+the `#load_credentials` under test.
+
+Since `#load_credentials` is called as part of the constructor (a mild
+anti-pattern, but lazy loading can be cumbersome), we need to validate
+its results via testing post-constructed object state.  Unfortunately,
+we can't get the resultant credentials state without piercing the
+instance-variable boundary of the `Vmpooler` object, so we added another
+seam: the `attr_reader` for `:credentials`.
+
+While we're there, we added the reader for the remainder of the
+options handed into the constructor, as it makes sense to at least
+be uniform in the library, even if it is under-tested.
+```
+* (MAINT) clean up whitespace in spec file (98631575)
+
+* Merge pull request #835 from waynr/bkr-307 (5c17aaec)
+
+
+```
+Merge pull request #835 from waynr/bkr-307
+
+(BKR-307) Add Beaker::Platform support for debian jessie (aka 8)
+```
+* Merge pull request #832 from anodelman/login-as-user (33f4d6b7)
+
+
+```
+Merge pull request #832 from anodelman/login-as-user
+
+(BKR-248) support connecting to SUTs with user/password
+```
+* (BKR-307) Add Beaker::Platform support for debian jessie (aka 8) (f87fc3fe)
+
+* Merge pull request #826 from anodelman/cisco (a7c0cce2)
+
+
+```
+Merge pull request #826 from anodelman/cisco
+
+(BKR-292) Cisco platform changes + prepend command functionality
+```
+* Merge pull request #831 from anodelman/remove-rake-task (ddf4a989)
+
+
+```
+Merge pull request #831 from anodelman/remove-rake-task
+
+(BKR-239) Remove dependency on puppet-dashboard rake tasks for...
+```
+* Merge pull request #821 from anodelman/shallow (a22c86f1)
+
+
+```
+Merge pull request #821 from anodelman/shallow
+
+(BKR-273) Allow Setting Type by Host
+```
+* (BKR-304) Prevent redundant copying when doing scp (7db1d724)
+
+
+```
+(BKR-304) Prevent redundant copying when doing scp
+
+Before this commit, the method Beaker::Host.do_scp_to would request
+copying of both directories and files from the underlying scp
+connection. This resulted in a lot of redundant copying since the
+scp connection, when handed a directory, would copy it recursively.
+
+This commit ensures that only the files are copied. This is safe
+because all remote directories are already created in a preceding
+step.
+```
+* (BKR-248) support connecting to SUTs with user/password (4da57c9f)
+
+
+```
+(BKR-248) support connecting to SUTs with user/password
+
+- check to see if a custom ssh user has been defined, if so then use
+  that instead of the default user per-OS type
+```
+* Merge pull request #830 from kevpl/puppet_git_branch_change (cc52b1e4)
+
+
+```
+Merge pull request #830 from kevpl/puppet_git_branch_change
+
+(MAINT) moving from stable to a release for facter & hiera
+```
+* Merge pull request #829 from kevpl/bkr231_answers_update (4975d36f)
+
+
+```
+Merge pull request #829 from kevpl/bkr231_answers_update
+
+(BKR-231) updated answers to use v4 answers for puppet 4
+```
+* (MAINT) moving from stable to a release for facter & hiera in puppet_git acceptance testing (89d6f425)
+
+* Merge pull request #823 from anodelman/subset-hosts (e62404db)
+
+
+```
+Merge pull request #823 from anodelman/subset-hosts
+
+(BKR-280) ability to install pe/foss on subset of hosts
+```
+* Merge pull request #813 from electrical/docker_swarm (b5818852)
+
+
+```
+Merge pull request #813 from electrical/docker_swarm
+
+(BKR-242) Docker swarm
+```
+* (BKR-231) updated answers to use v4 answers for puppet 4 (49eed580)
+
+* (BKR-239) Remove dependency on puppet-dashboard rake tasks for... (ce9aa43c)
+
+
+```
+(BKR-239) Remove dependency on puppet-dashboard rake tasks for...
+
+... shallow gravy.
+
+- wrap rake test call in version check, only run if pre 3.99
+- use scooter for new frictionless workflow
+```
+* (BKR-292) Cisco platform changes + prepend command functionality (685e43aa)
+
+
+```
+(BKR-292) Cisco platform changes + prepend command functionality
+
+- add cisco to supported platforms
+- add ability to send a prepend_cmd string to a command object
+```
+* Merge pull request #822 from justinstoller/maint/master/remove-step (b7915485)
+
+
+```
+Merge pull request #822 from justinstoller/maint/master/remove-step
+
+(maint) Remove step dsl usage from inside Beaker
+```
+* Merge pull request #825 from mcanevet/dev/user_data (98453297)
+
+
+```
+Merge pull request #825 from mcanevet/dev/user_data
+
+(BKR-300) Always manage_etc_hosts in cloud-init
+```
+* (BKR-300) Always manage_etc_hosts in cloud-init (b5a0885b)
+
+* (BKR-280) ability to install pe/foss on subset of hosts (83accb53)
+
+
+```
+(BKR-280) ability to install pe/foss on subset of hosts
+
+- created install_pe_on, upgrade_pe_on, install_puppet_on that accept a
+  first argument of a host array and then correctly install pe/puppet on
+  provided hosts
+```
+* (maint) Remove step dsl usage from inside Beaker (5d1cf55a)
+
+
+```
+(maint) Remove step dsl usage from inside Beaker
+
+Prior to this we would use the `step` DSL method in a couple of places
+inside Beaker.  This can be problematic when using Beaker as a library
+and requires loading more of Beaker than is necessary for executing
+certain helper methods.  This commit removes the internal usage of step
+and replaces it with calls to the the logger that will output the same
+style of notification that calling step does.
+```
+* (BKR-273) Allow Setting Type by Host (5c40b0d7)
+
+
+```
+(BKR-273) Allow Setting Type by Host
+
+- no longer use 'type' to control path/default host settings
+- set environment and defaults post pe/foss installation
+- dump more information post testing so that you can correctly pick up
+  the host again
+```
+* (BKR-242) Add Swarm support to docker run (7d447a46)
+
+
+```
+(BKR-242) Add Swarm support to docker run
+
+To distribute the same built image between all swarm slaves we need to
+push the image to a private registry.
+If the image does not exist yet ( first build ) we tag + push it.
+If it does exist we will re-use it.
+If we built the image on Node A but then the run command is executed on
+node B we will pull the image automatically and run it.
+
+The only downside is that we will always build the image since we need
+to know the resulting image ID.
+Hopefully this can be improved in the future.
+```
+* (BKR-242) Add logic to support swarm (917a2306)
+
+
+```
+(BKR-242) Add logic to support swarm
+
+When we want the IP address of the container with running swarm we have
+to fetch the IP of the swarm slave it self.
+```
+* (BKR-226) - rsync fails because of NATted ports fix (89c4d6ab)
+
+### <a name = "2.13.0">2.13.0 - 29 May, 2015 (dd70aa66)
+
+* (HISTORY) update beaker history for gem release 2.13.0 (dd70aa66)
+
+* (GEM) update beaker version to 2.13.0 (c801d4c8)
+
+* Merge pull request #824 from anodelman/remove-rake-task (32d49e16)
+
+
+```
+Merge pull request #824 from anodelman/remove-rake-task
+
+(BKR-239) Remove dependency on puppet-dashboard rake tasks...
+```
+* (BKR-239) Remove dependency on puppet-dashboard rake tasks... (a334fe40)
+
+
+```
+(BKR-239) Remove dependency on puppet-dashboard rake tasks...
+
+... for shallow gravy.
+
+- do that
+```
+* Merge pull request #817 from justinstoller/maint/master/hocon-update (ddc7d948)
+
+
+```
+Merge pull request #817 from justinstoller/maint/master/hocon-update
+
+(maint) Relax constraint on hocon
+```
+* Merge pull request #820 from anodelman/fix-accessors (aeedd651)
+
+
+```
+Merge pull request #820 from anodelman/fix-accessors
+
+(BKR-283)/(BKR-262) missing @metadata/@logger accessors for beaker-rspec
+```
+* Merge pull request #819 from spjmurray/virtualbox_volumes (85bbc4dd)
+
+
+```
+Merge pull request #819 from spjmurray/virtualbox_volumes
+
+(BKR-281) VirtualBox: Add support for storage arrays
+```
+* (BKR-283)/(BKR-262) missing @metadata/@logger accessors for beaker-rspec (d230c2cc)
+
+
+```
+(BKR-283)/(BKR-262) missing @metadata/@logger accessors for beaker-rspec
+
+- beaker-rspec needs access to @metadata, broken with beaker 2.12.0
+- Beaker-rspec missing @logger accessor
+
+Added both logger and metadata accessors so that beaker-rspec can be
+repaired to work with latest beaker releases.
+```
+* (BKR-287) Relax constraint on hocon (f8f44deb)
+
+
+```
+(BKR-287) Relax constraint on hocon
+
+Prior to this we were using the hocon gem and pinning to a z release.
+
+This commit relaxes the version dependency to pull in an pre-1.0 hocon
+release.
+
+This is necessary for testing the hocon module itself.
+```
+* (BKR-281) VirtualBox: Add support for storage arrays (3b0b2443)
+
+
+```
+(BKR-281) VirtualBox: Add support for storage arrays
+
+Extends the Vagrant VirtualBox hypervisor to allow per host definitions
+of storage volumes, for testing things like ceph and other storage
+technologies.
+
+An example nodeset provisions the VM with 3 attached storage volumes
+available as sdb, sdc, sdd (on linux systems) at at SCSI addresses
+2:0:0:0, 3:0:0:0, 4:0:0:0.  Sizes are specified in MB.
+
+  HOSTS:
+    osd0:
+      hypervisor: vagrant
+      volumes:
+        osd0_0:
+          size: 10000
+        osd0_1:
+          size: 10000
+        journal:
+          size: 1000
+```
+### <a name = "2.12.0">2.12.0 - 20 May, 2015 (62845ce9)
+
+* (HISTORY) update beaker history for gem release 2.12.0 (62845ce9)
+
+* (GEM) update beaker version to 2.12.0 (88efb0d6)
+
+* Merge pull request #790 from kevpl/bkr76_acceptance_addpresuite (4d43e91d)
+
+
+```
+Merge pull request #790 from kevpl/bkr76_acceptance_addpresuite
+
+(BKR-76) created first pre-suite acceptance tests
+```
+* Merge pull request #814 from kevpl/bkr186_test_addaccessors2 (121ee9f8)
+
+
+```
+Merge pull request #814 from kevpl/bkr186_test_addaccessors2
+
+(BKR-186) added current test info accessors to DSL
+```
+* Merge pull request #815 from kevpl/bkr232_option_noprovision_implies_no_configure_validate (f60724a6)
+
+
+```
+Merge pull request #815 from kevpl/bkr232_option_noprovision_implies_no_configure_validate
+
+(BKR-232) --no-provision now implies --no-configure & --no-validate
+```
+* Merge pull request #816 from petems/BKR-276-fix_freebsd_file_making (158273ef)
+
+
+```
+Merge pull request #816 from petems/BKR-276-fix_freebsd_file_making
+
+(BKR-276) Fixes `#echo_to_file` for FreeBSD
+```
+* (BKR-276) Fixes `#echo_to_file` for FreeBSD (d1e36080)
+
+
+```
+(BKR-276) Fixes `#echo_to_file` for FreeBSD
+
+Previous command didn't wrap printf string in `"`
+Stops command working:
+
+
+
+
+freebsd-9-x64 executed in 0.04 seconds
+Warning: ssh connection to 10.255.52.108 has been terminated
+
+freebsd-9-x64 20:12:47$ printf 127.0.0.1\tlocalhost localhost.localdomain\n10.255.52.108\tfreebsd-9-x64\n > /etc/hosts
+Attempting ssh connection to 10.255.52.108, user: root, opts: {:config=>"/var/folders/nn/408ddhln26s1b356ry19q6yr0000gp/T/freebsd-9-x6420150518-65951-3jag0b"}
+printf: missing format character
+
+
+```
+* (BKR-232) --no-provision now implies --no-configure & --no-validate (e2200d2e)
+
+* (BKR-76) sles: fixed git & gem install issues (d0d0b95d)
+
+* (BKR-76) fixed solaris 11 issues with git install (8909ff3b)
+
+* Merge pull request #799 from sschneid/vmpooler_tokens (3e545182)
+
+
+```
+Merge pull request #799 from sschneid/vmpooler_tokens
+
+(BKR-218) Support using vmpooler API tokens
+```
+* (BKR-76) added windows ruby setup steps (1f45fc57)
+
+* (BKR-186) added current test info accessors to DSL (76b07a5a)
+
+* (BKR-218) Support using vmpooler API tokens (4c860f93)
+
+* (BKR-76) created first pre-suite acceptance tests (b5d1dd1f)
+
+### <a name = "2.11.0">2.11.0 - 6 May, 2015 (b775cc73)
+
+* (HISTORY) update beaker history for gem release 2.11.0 (b775cc73)
 
 * (GEM) update beaker version to 2.11.0 (50128ac0)
 
@@ -18608,30 +21276,6 @@ effect a dhcp lease renewal after ntpdate is run
 effect a dhcp lease renewal after ntpdate is run
 
 Some VMs, after reverting to snapshot, are renewing their dhcp lease after our tests are running, causing apparent network errors. This test will renew the lease early so it's good for a day (or whatever is configured at the dhcp server), rather than just a few seconds.
-```
-### <a name = "pe2.0.0">pe2.0.0 - 31 Jan, 2012 (8d064e33)
-
-* (maint) remove version checking for --pe-version option (8d064e33)
-
-
-```
-(maint) remove version checking for --pe-version option
-
-Checking for a specific PE version serves no real purpose; if
-an invalid version is passed the hassness will halt with an
-apporiate error indicating the vesrion needed is not found.
-```
-* (maint) Add support to install alt versions of PE (15bfaeed)
-
-
-```
-(maint) Add support to install alt versions of PE
-
-Need the ability to install more than just the LASTEST tarball
-of PE; passing --pe-version 2.0.0 will install PE 2.0.0 from
-/opt/enterptise/dists/pe2.0.0
-If --pe-version is ommited, version is derived from LATEST and
-/opt/enterprise/dist is used for the path.
 ```
 ### <a name = "pe2.0">pe2.0 - 11 Nov, 2011 (4d7b65b6)
 

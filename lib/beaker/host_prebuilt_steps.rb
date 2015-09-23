@@ -1,6 +1,6 @@
 require 'pathname'
 
-[ 'command', "dsl/patterns" ].each do |lib|
+[ 'command', "dsl" ].each do |lib|
   require "beaker/#{lib}"
 end
 
@@ -13,7 +13,8 @@ module Beaker
     SLEEPWAIT = 5
     TRIES = 5
     UNIX_PACKAGES = ['curl', 'ntpdate']
-    FREEBSD_PACKAGES = ['curl']
+    FREEBSD_PACKAGES = ['curl', 'perl5']
+    OPENBSD_PACKAGES = ['curl']
     WINDOWS_PACKAGES = ['curl']
     PSWINDOWS_PACKAGES = []
     SLES10_PACKAGES = ['curl']
@@ -24,6 +25,7 @@ module Beaker
     ETC_HOSTS_PATH_SOLARIS = "/etc/inet/hosts"
     ROOT_KEYS_SCRIPT = "https://raw.githubusercontent.com/puppetlabs/puppetlabs-sshkeys/master/templates/scripts/manage_root_authorized_keys"
     ROOT_KEYS_SYNC_CMD = "curl -k -o - -L #{ROOT_KEYS_SCRIPT} | %s"
+    ROOT_KEYS_SYNC_CMD_AIX = "curl --tlsv1 -o - -L #{ROOT_KEYS_SCRIPT} | %s"
     APT_CFG = %q{ Acquire::http::Proxy "http://proxy.puppetlabs.net:3128/"; }
     IPS_PKG_REPO="http://solaris-11-internal-repo.delivery.puppetlabs.net"
 
@@ -103,7 +105,9 @@ module Beaker
           check_and_install_packages_if_needed(host, PSWINDOWS_PACKAGES)
         when host['platform'] =~ /freebsd/
           check_and_install_packages_if_needed(host, FREEBSD_PACKAGES)
-        when host['platform'] !~ /debian|aix|solaris|windows|sles-|osx-|cumulus/
+        when host['platform'] =~ /openbsd/
+          check_and_install_packages_if_needed(host, OPENBSD_PACKAGES)
+        when host['platform'] !~ /debian|aix|solaris|windows|sles-|osx-|cumulus|f5-/
           check_and_install_packages_if_needed(host, UNIX_PACKAGES)
         end
       end
@@ -140,6 +144,8 @@ module Beaker
         # Allow all exit code, as this operation is unlikely to cause problems if it fails.
         if host['platform'] =~ /solaris|eos/
           host.exec(Command.new(ROOT_KEYS_SYNC_CMD % "bash"), :accept_all_exit_codes => true)
+        elsif host['platform'] =~ /aix/
+          host.exec(Command.new(ROOT_KEYS_SYNC_CMD_AIX % "env PATH=/usr/gnu/bin:$PATH bash"), :accept_all_exit_codes => true)
         else
           host.exec(Command.new(ROOT_KEYS_SYNC_CMD % "env PATH=/usr/gnu/bin:$PATH bash"), :accept_all_exit_codes => true)
         end
@@ -280,8 +286,12 @@ module Beaker
           search = $1
         end
       }
-      return domain if domain
-      return search if search
+      return_value ||= domain
+      return_value ||= search
+
+      if return_value
+        return_value.gsub(/\.$/, '')
+      end
     end
 
     #Determine the ip address of the provided host
@@ -319,6 +329,12 @@ module Beaker
           host.exec(Command.new('sudo cp -r .ssh /var/root/.'), {:pty => true})
         elsif host['platform'] =~ /freebsd/
           host.exec(Command.new('sudo cp -r .ssh /root/.'), {:pty => true})
+        elsif host['platform'] =~ /openbsd/
+          host.exec(Command.new('sudo cp -r .ssh /root/.'), {:pty => true})
+        elsif host['platform'] =~ /solaris-10/
+          host.exec(Command.new('sudo cp -r .ssh /.'), {:pty => true})
+        elsif host['platform'] =~ /solaris-11/
+          host.exec(Command.new('sudo cp -r .ssh /root/.'), {:pty => true})
         else
           host.exec(Command.new('sudo su -c "cp -r .ssh /root/."'), {:pty => true})
         end
@@ -336,7 +352,10 @@ module Beaker
     def hack_etc_hosts hosts, opts
       etc_hosts = "127.0.0.1\tlocalhost localhost.localdomain\n"
       hosts.each do |host|
-        etc_hosts += "#{host['vm_ip'] || host['ip'].to_s}\t#{host[:vmhostname] || host.name}\n"
+        ip = host['vm_ip'] || host['ip'].to_s
+        hostname = host[:vmhostname] || host.name
+        domain = get_domain_name(host)
+        etc_hosts += "#{ip}\t#{hostname}.#{domain} #{hostname}\n"
       end
       hosts.each do |host|
         set_etc_hosts(host, etc_hosts)
@@ -359,6 +378,13 @@ module Beaker
           host.exec(Command.new("sudo sed -i '' 's/#PermitRootLogin yes/PermitRootLogin Yes/g' /etc/sshd_config"))
         elsif host['platform'] =~ /freebsd/
           host.exec(Command.new("sudo sed -i -e 's/#PermitRootLogin no/PermitRootLogin yes/g' /etc/ssh/sshd_config"), {:pty => true} )
+        elsif host['platform'] =~ /openbsd/
+          host.exec(Command.new("sudo perl -pi -e 's/^PermitRootLogin no/PermitRootLogin yes/' /etc/ssh/sshd_config"), {:pty => true} )
+        elsif host['platform'] =~ /solaris-10/
+          host.exec(Command.new("sudo gsed -i -e 's/#PermitRootLogin no/PermitRootLogin yes/g' /etc/ssh/sshd_config"), {:pty => true} )
+        elsif host['platform'] =~ /solaris-11/
+          host.exec(Command.new("sudo rolemod -K type=normal root"), {:pty => true} )
+          host.exec(Command.new("sudo gsed -i -e 's/PermitRootLogin no/PermitRootLogin yes/g' /etc/ssh/sshd_config"), {:pty => true} )
         elsif not host.is_powershell?
           host.exec(Command.new("sudo su -c \"sed -ri 's/^#?PermitRootLogin no|^#?PermitRootLogin yes/PermitRootLogin yes/' /etc/ssh/sshd_config\""), {:pty => true})
         else
@@ -371,8 +397,10 @@ module Beaker
           host.exec(Command.new("sudo -E systemctl restart sshd.service"), {:pty => true})
         elsif host['platform'] =~ /centos|el-|redhat|fedora|eos/
           host.exec(Command.new("sudo -E /sbin/service sshd reload"), {:pty => true})
-        elsif host['platform'] =~ /freebsd/
+        elsif host['platform'] =~ /(free|open)bsd/
           host.exec(Command.new("sudo /etc/rc.d/sshd restart"))
+        elsif host['platform'] =~ /solaris/
+          host.exec(Command.new("sudo -E svcadm restart network/ssh"), {:pty => true} )
         else
           logger.warn("Attempting to update ssh on non-supported platform: #{host.name}: #{host['platform']}")
         end
@@ -456,35 +484,12 @@ module Beaker
       merged_hash
     end
 
-    # 'echo' the provided value on the given host
-    # @param [Host] host The host to execute the 'echo' on
-    # @param [String] val The string to 'echo' on the host
-    def echo_on_host host, val
-      #val = val.gsub(/"/, "\"").gsub(/\(/, "\(")
-      if host.is_powershell?
-        host.exec(Command.new("echo #{val}")).stdout.chomp
-      else
-        host.exec(Command.new("echo \"#{val}\"")).stdout.chomp
-      end
-    end
-
     # Create the hash of default environment from host (:host_env), global options hash (:host_env) and default PE/Foss puppet variables
     # @param [Host] host The host to construct the environment hash for, host specific environment should be in :host_env in a hash
     # @param [Hash] opts Hash of options, including optional global  host_env to be applied to each provided host
     # @return [Hash] A hash of environment variables for provided host
     def construct_env host, opts
       env = additive_hash_merge(host[:host_env], opts[:host_env])
-
-      #Add PATH
-
-      #prepend any PATH already set for this host
-
-      env['PATH'] = (%w(puppetbindir facterbindir hierabindir) << env['PATH']).compact.reject(&:empty?)
-      #get the PATH defaults
-      env['PATH'].map! { |val| host[val] }
-      env['PATH'] = env['PATH'].compact.reject(&:empty?)
-      #run the paths through echo to see if they have any subcommands that need processing
-      env['PATH'].map! { |val| echo_on_host(host, val) }
 
       env.each_key do |key|
         separator = host['pathseparator']
@@ -503,6 +508,7 @@ module Beaker
       logger = opts[:logger]
 
       block_on host do |host|
+        next if host['platform'] =~ /f5/
         env = construct_env(host, opts)
         logger.debug("setting local environment on #{host.name}")
         case host['platform']
@@ -520,6 +526,10 @@ module Beaker
           else
             #nothing to do here
           end
+        when /osx-10\.*11/
+          host.exec(Command.new("echo '\nPermitUserEnvironment yes' >> /private/etc/ssh/sshd_config"))
+          host.exec(Command.new("launchctl unload /System/Library/LaunchDaemons/ssh.plist"))
+          host.exec(Command.new("launchctl load /System/Library/LaunchDaemons/ssh.plist"))
         when /osx/
           host.exec(Command.new("echo '\nPermitUserEnvironment yes' >> /etc/sshd_config"))
           host.exec(Command.new("launchctl unload /System/Library/LaunchDaemons/ssh.plist"))
@@ -543,8 +553,8 @@ module Beaker
           host.exec(Command.new("echo '\nPermitUserEnvironment yes' >> /etc/ssh/sshd_config"))
           host.exec(Command.new("stopsrc -g ssh"))
           host.exec(Command.new("startsrc -g ssh"))
-        when /freebsd/
-          host.echo_to_file('\nPermitUserEnvironment yes', '/etc/ssh/sshd_config')
+        when /(free|open)bsd/
+          host.exec(Command.new("sudo perl -pi -e 's/^#?PermitUserEnvironment no/PermitUserEnvironment yes/' /etc/ssh/sshd_config"), {:pty => true} )
           host.exec(Command.new("sudo /etc/rc.d/sshd restart"))
         end
 
@@ -555,11 +565,21 @@ module Beaker
           host.exec(Command.new("touch #{host[:ssh_env_file]}"))
           #add the constructed env vars to this host
           host.add_env_var('PATH', '$PATH')
+          # FIXME
+          if host['platform'] =~ /openbsd-(\d)\.?(\d)-(.+)/
+            version = "#{$1}.#{$2}"
+            arch = $3
+            arch = 'amd64' if ['x64', 'x86_64'].include?(arch)
+            host.add_env_var('PKG_PATH', "http://ftp.openbsd.org/pub/OpenBSD/#{version}/packages/#{arch}/")
+          end
         end
         #add the env var set to this test host
         env.each_pair do |var, value|
           host.add_env_var(var, value)
         end
+        # REMOVE POST BEAKER 3: backwards compatability, do some setup based upon the global type
+        # this is the worst and i hate it
+        Class.new.extend(Beaker::DSL).configure_type_defaults_on(host)
 
         #close the host to re-establish the connection with the new sshd settings
         host.close

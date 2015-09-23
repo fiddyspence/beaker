@@ -361,7 +361,7 @@ describe ClassMixedWithDSLHelpers do
 
     it 'runs the pe-puppet on a system without pe-puppet-agent' do
       vardir = '/var'
-      deb_agent = make_host( 'deb', :platform => 'debian-7-amd64' )
+      deb_agent = make_host( 'deb', :platform => 'debian-7-amd64', :pe_ver => '3.7' )
       allow( deb_agent ).to receive( :puppet ).and_return( { 'vardir' => vardir } )
 
       expect( deb_agent ).to receive( :file_exist? ).with("/var/state/agent_catalog_run.lock").and_return(false)
@@ -376,13 +376,26 @@ describe ClassMixedWithDSLHelpers do
 
     it 'runs the pe-puppet-agent on a unix system with pe-puppet-agent' do
       vardir = '/var'
-      el_agent = make_host( 'el', :platform => 'el-5-x86_64' )
+      el_agent = make_host( 'el', :platform => 'el-5-x86_64', :pe_ver => '3.7' )
       allow( el_agent ).to receive( :puppet ).and_return( { 'vardir' => vardir } )
 
       expect( el_agent ).to receive( :file_exist? ).with("/var/state/agent_catalog_run.lock").and_return(false)
       expect( el_agent ).to receive( :file_exist? ).with("/etc/init.d/pe-puppet-agent").and_return(true)
 
       expect( subject ).to receive( :puppet_resource ).with( "service", "pe-puppet-agent", "ensure=stopped").once
+      expect( subject ).to receive( :on ).once
+
+      subject.stop_agent_on( el_agent )
+    end
+
+    it 'runs puppet on a unix system 4.0 or newer' do
+      vardir = '/var'
+      el_agent = make_host( 'el', :platform => 'el-5-x86_64', :pe_ver => '4.0' )
+      allow( el_agent ).to receive( :puppet ).and_return( { 'vardir' => vardir } )
+
+      expect( el_agent ).to receive( :file_exist? ).with("/var/state/agent_catalog_run.lock").and_return(false)
+
+      expect( subject ).to receive( :puppet_resource ).with( "service", "puppet", "ensure=stopped").once
       expect( subject ).to receive( :on ).once
 
       subject.stop_agent_on( el_agent )
@@ -540,6 +553,7 @@ describe ClassMixedWithDSLHelpers do
 
       describe 'and command line args passed' do
         it 'modifies SUT trapperkeeper configuration w/ command line args' do
+          host['puppetserver-confdir'] = '/etc/puppetserver/conf.d'
           expect( subject ).to receive( :modify_tk_config).with(host, puppetserver_conf,
                                                           custom_puppetserver_opts)
           subject.with_puppet_running_on(host, conf_opts)
@@ -549,6 +563,7 @@ describe ClassMixedWithDSLHelpers do
       describe 'and no command line args passed' do
         let(:command_line_args) { nil }
         it 'modifies SUT trapperkeeper configuration w/ puppet defaults' do
+          host['puppetserver-confdir'] = '/etc/puppetserver/conf.d'
           expect( subject ).to receive( :modify_tk_config).with(host, puppetserver_conf,
                                                           default_puppetserver_opts)
           subject.with_puppet_running_on(host, conf_opts)
@@ -571,7 +586,7 @@ describe ClassMixedWithDSLHelpers do
           expect(host).to execute_commands_matching(/puppet resource service #{host['puppetservice']}.*ensure=stopped/).exactly(2).times
         end
 
-        it 'yields to a block after bouncing service' do
+        it 'yields to a block in between bouncing service calls' do
           execution = 0
           allow( subject ).to receive(:curl_with_retries)
           expect do
@@ -584,13 +599,33 @@ describe ClassMixedWithDSLHelpers do
           expect(host).to execute_commands_matching(/puppet resource service #{host['puppetservice']}.*ensure=running/).exactly(2).times
           expect(host).to execute_commands_matching(/puppet resource service #{host['puppetservice']}.*ensure=stopped/).exactly(2).times
         end
+
+        context ':restart_when_done flag set false' do
+          it 'starts puppet once, stops it twice' do
+            subject.with_puppet_running_on(host, { :restart_when_done => false })
+            expect(host).to execute_commands_matching(/puppet resource service #{host['puppetservice']}.*ensure=running/).once
+            expect(host).to execute_commands_matching(/puppet resource service #{host['puppetservice']}.*ensure=stopped/).exactly(2).times
+          end
+
+          it 'yields to a block after bouncing service' do
+            execution = 0
+            allow( subject ).to receive(:curl_with_retries)
+            expect do
+              subject.with_puppet_running_on(host, { :restart_when_done => false }) do
+                expect(host).to execute_commands_matching(/puppet resource service #{host['puppetservice']}.*ensure=running/).exactly(1).times
+                expect(host).to execute_commands_matching(/puppet resource service #{host['puppetservice']}.*ensure=stopped/).exactly(1).times
+                execution += 1
+              end
+            end.to change { execution }.by(1)
+            expect(host).to execute_commands_matching(/puppet resource service #{host['puppetservice']}.*ensure=stopped/).exactly(2).times
+          end
+        end
       end
 
       context 'for foss packaged hosts using passenger' do
         before(:each) do
           host.uses_passenger!
         end
-
         it 'bounces puppet twice' do
           allow( subject ).to receive(:curl_with_retries)
           subject.with_puppet_running_on(host, {})
@@ -608,19 +643,38 @@ describe ClassMixedWithDSLHelpers do
           end.to change { execution }.by(1)
           expect(host).to execute_commands_matching(/apache2ctl graceful/).exactly(2).times
         end
+
+        context ':restart_when_done flag set false' do
+          it 'bounces puppet once' do
+            allow( subject ).to receive(:curl_with_retries)
+            subject.with_puppet_running_on(host, { :restart_when_done => false })
+            expect(host).to execute_commands_matching(/apache2ctl graceful/).once
+          end
+
+          it 'yields to a block after bouncing service' do
+            execution = 0
+            allow( subject ).to receive(:curl_with_retries)
+            expect do
+              subject.with_puppet_running_on(host, { :restart_when_done => false }) do
+                expect(host).to execute_commands_matching(/apache2ctl graceful/).once
+                execution += 1
+              end
+            end.to change { execution }.by(1)
+          end
+        end
       end
 
       context 'for foss packaged hosts using webrick' do
         let(:use_service) { true }
 
-        it 'stops and starts master using service scripts' do
+        it 'stops and starts master using service scripts twice' do
           allow( subject ).to receive(:curl_with_retries)
           subject.with_puppet_running_on(host, {})
           expect(host).to execute_commands_matching(/puppet resource service #{host['puppetservice']}.*ensure=running/).exactly(2).times
           expect(host).to execute_commands_matching(/puppet resource service #{host['puppetservice']}.*ensure=stopped/).exactly(2).times
         end
 
-        it 'yields to a block after stopping and starting service' do
+        it 'yields to a block in between bounce calls for the service' do
           execution = 0
           expect do
             subject.with_puppet_running_on(host, {}) do
@@ -631,6 +685,26 @@ describe ClassMixedWithDSLHelpers do
           end.to change { execution }.by(1)
           expect(host).to execute_commands_matching(/puppet resource service #{host['puppetservice']}.*ensure=running/).exactly(2).times
           expect(host).to execute_commands_matching(/puppet resource service #{host['puppetservice']}.*ensure=stopped/).exactly(2).times
+        end
+
+        context ':restart_when_done flag set false' do
+          it 'stops (twice) and starts (once) master using service scripts' do
+            allow( subject ).to receive(:curl_with_retries)
+            subject.with_puppet_running_on(host, { :restart_when_done => false })
+            expect(host).to execute_commands_matching(/puppet resource service #{host['puppetservice']}.*ensure=running/).once
+            expect(host).to execute_commands_matching(/puppet resource service #{host['puppetservice']}.*ensure=stopped/).exactly(2).times
+          end
+
+          it 'yields to a block after stopping and starting service' do
+            execution = 0
+            expect do
+              subject.with_puppet_running_on(host, { :restart_when_done => false }) do
+                expect(host).to execute_commands_matching(/puppet resource service #{host['puppetservice']}.*ensure=running/).once
+                expect(host).to execute_commands_matching(/puppet resource service #{host['puppetservice']}.*ensure=stopped/).once
+                execution += 1
+              end
+            end.to change { execution }.by(1)
+          end
         end
       end
 
@@ -675,6 +749,18 @@ describe ClassMixedWithDSLHelpers do
             subject.with_puppet_running_on(host, {:__commandline_args__ => '--with arg'})
             expect(host).to execute_commands_matching(/^puppet master --with arg/).once
           end
+
+          it 'is not affected by the :restart_when_done flag' do
+            execution = 0
+            expect do
+              subject.with_puppet_running_on(host, { :restart_when_done => true }) do
+                expect(host).to execute_commands_matching(/^puppet master/).exactly(4).times
+                execution += 1
+              end
+            end.to change { execution }.by(1)
+            expect(host).to execute_commands_matching(/^kill [^-]/).once
+            expect(host).to execute_commands_matching(/^kill -0/).once
+          end
         end
       end
 
@@ -706,7 +792,7 @@ describe ClassMixedWithDSLHelpers do
           end
 
           it 'restores puppet.conf before restarting' do
-            subject.with_puppet_running_on(host, {})
+            subject.with_puppet_running_on(host, { :restart_when_done => true })
             expect(host).to execute_commands_matching_in_order(/cat '#{backup_location}' > '#{original_location}'/,
                                                                /ensure=stopped/,
                                                                /ensure=running/)
@@ -791,9 +877,9 @@ describe ClassMixedWithDSLHelpers do
     it 'delegates to #with_puppet_running_on with the default host' do
       allow( subject ).to receive( :hosts ).and_return( hosts )
 
-      expect( subject ).to receive( :with_puppet_running_on ).with( master, {:opt => 'value'}, '/dir').once
+      expect( subject ).to receive( :with_puppet_running_on ).with( master, {:opt => 'value'}, '/dir' ).once
 
-      subject.with_puppet_running( {:opt => 'value'}, '/dir'  )
+      subject.with_puppet_running( {:opt => 'value'}, '/dir' )
 
 
     end

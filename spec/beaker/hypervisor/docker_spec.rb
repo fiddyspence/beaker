@@ -59,6 +59,7 @@ module Beaker
 
     let (:docker) { ::Beaker::Docker.new( hosts, options ) }
     let(:docker_options) { nil }
+    let (:version) { {"ApiVersion"=>"1.18", "Arch"=>"amd64", "GitCommit"=>"4749651", "GoVersion"=>"go1.4.2", "KernelVersion"=>"3.16.0-37-generic", "Os"=>"linux", "Version"=>"1.6.0"} }
 
     before :each do
       # Stub out all of the docker-api gem. we should never really call it
@@ -67,6 +68,7 @@ module Beaker
       allow( ::Docker ).to receive(:options).and_return(docker_options)
       allow( ::Docker ).to receive(:options=)
       allow( ::Docker ).to receive(:logger=)
+      allow( ::Docker ).to receive(:version).and_return(version)
       allow( ::Docker::Image ).to receive(:build).and_return(image)
       allow( ::Docker::Container ).to receive(:create).and_return(container)
       allow_any_instance_of( ::Docker::Container ).to receive(:start)
@@ -203,7 +205,8 @@ module Beaker
         ENV['DOCKER_HOST'] = nil
         docker.provision
         hosts.each do |host|
-          expect( docker ).to receive( :set_etc_hosts ).with( host, "127.0.0.1\tlocalhost localhost.localdomain\n192.0.2.1\tvm1\n192.0.2.1\tvm2\n192.0.2.1\tvm3\n" ).once
+          expect( docker ).to receive( :get_domain_name ).with( host ).and_return( 'labs.lan' )
+          expect( docker ).to receive( :set_etc_hosts ).with( host, "127.0.0.1\tlocalhost localhost.localdomain\n192.0.2.1\tvm1.labs.lan vm1\n192.0.2.1\tvm2.labs.lan vm2\n192.0.2.1\tvm3.labs.lan vm3\n" ).once
         end
         docker.hack_etc_hosts( hosts, options )
       end

@@ -36,8 +36,13 @@ module Beaker
       # @param [String] step_name The name of the step to be logged.
       # @param [Proc] block The actions to be performed in this step.
       def step step_name, &block
-        logger.notify "\n  * #{step_name}\n"
-        yield if block_given?
+        logger.notify "\n* #{step_name}\n"
+        set_current_step_name(step_name)
+        if block_given?
+          logger.step_in()
+          yield
+          logger.step_out()
+        end
       end
 
       # Provides a method to name tests.
@@ -47,7 +52,12 @@ module Beaker
       #
       def test_name my_name, &block
         logger.notify "\n#{my_name}\n"
-        yield if block_given?
+        set_current_test_name(my_name)
+        if block_given?
+          logger.step_in()
+          yield
+          logger.step_out()
+        end
       end
 
       # Declare a teardown process that will be called after a test case is
@@ -162,17 +172,40 @@ module Beaker
       #       on( solaris, 'zonename' ) =~ /global/
       #     end
       #
+      # @example Confining to an already defined subset of hosts
+      #     confine :to, {}, agents
+      #
+      # @example Confining from  an already defined subset of hosts
+      #     confine :except, {}, agents
+      #
+      # @example Confining to all ubuntu agents + all non-agents
+      #     confine :to, { :platform => 'ubuntu' }, agents
+      #
+      # @example Confining to any non-windows agents + all non-agents
+      #     confine :except, { :platform => 'windows' }, agents
+      #
+      #
       # @return [Array<Host>] Returns an array of hosts that are still valid
       #   targets for this tests case.
       # @raise [SkipTest] Raises skip test if there are no valid hosts for
       #   this test case after confinement.
       def confine(type, criteria, host_array = nil, &block)
-        hosts_to_modify = host_array || hosts
+        hosts_to_modify = Array( host_array || hosts )
+        hosts_not_modified = hosts - hosts_to_modify #we aren't examining these hosts
         case type
         when :except
-          hosts_to_modify = hosts_to_modify - select_hosts(criteria, hosts_to_modify, &block)
+          if criteria and ( not criteria.empty? )
+            hosts_to_modify = hosts_to_modify - select_hosts(criteria, hosts_to_modify, &block) + hosts_not_modified
+          else
+            # confining to all hosts *except* provided array of hosts
+            hosts_to_modify = hosts_not_modified
+          end
         when :to
-          hosts_to_modify = select_hosts(criteria, hosts_to_modify, &block)
+          if criteria and ( not criteria.empty? )
+            hosts_to_modify = select_hosts(criteria, hosts_to_modify, &block) + hosts_not_modified
+          else
+            # confining to only hosts in provided array of hosts
+          end
         else
           raise "Unknown option #{type}"
         end
@@ -190,15 +223,56 @@ module Beaker
       #
       # @see #confine
       def confine_block(type, criteria, host_array = nil, &block)
-        begin
-          original_hosts = self.hosts.dup
-          confine(type, criteria, host_array)
+        host_array = Array( host_array || hosts )
+        original_hosts = self.hosts.dup
+        confine(type, criteria, host_array)
 
-          yield
+        yield
 
-        ensure
-          self.hosts = original_hosts
+      rescue Beaker::DSL::Outcomes::SkipTest => e
+        # I don't like this much, but adding options to confine is a breaking change
+        # to the DSL that would involve a major version bump
+        if e.message !~ /No suitable hosts found/
+          # a skip generated from the provided block, pass it up the chain
+          raise e
         end
+      ensure
+        self.hosts = original_hosts
+      end
+
+      # Sets tags on the current {Beaker::TestCase}, and skips testing
+      # if necessary after checking this case's tags against the ones that are
+      # being included or excluded.
+      #
+      # @param [Array<String>] tags Tags to be assigned to the current test
+      #
+      # @return nil
+      # @api public
+      def tag(*tags)
+        metadata[:case] ||= {}
+        metadata[:case][:tags] = []
+        tags.each do |tag|
+          metadata[:case][:tags] << tag.downcase
+        end
+
+        @options[:tag_includes] ||= []
+        @options[:tag_excludes] ||= []
+
+        tags_needed_to_include_this_test = []
+        @options[:tag_includes].each do |tag_to_include|
+          tags_needed_to_include_this_test << tag_to_include \
+            unless metadata[:case][:tags].include?(tag_to_include)
+        end
+        skip_test "#{self.path} does not include necessary tag(s): #{tags_needed_to_include_this_test}" \
+          if tags_needed_to_include_this_test.length > 0
+
+        tags_to_remove_to_include_this_test = []
+        @options[:tag_excludes].each do |tag_to_exclude|
+          tags_to_remove_to_include_this_test << tag_to_exclude \
+            if metadata[:case][:tags].include?(tag_to_exclude)
+        end
+        skip_test "#{self.path} includes excluded tag(s): #{tags_to_remove_to_include_this_test}" \
+          if tags_to_remove_to_include_this_test.length > 0
       end
 
       #Return a set of hosts that meet the given criteria

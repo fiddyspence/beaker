@@ -42,7 +42,7 @@ Vagrant.configure("2") do |c|
     v.vm.box_check_update = 'true'
     v.vm.network :private_network, ip: "ip.address.for.vm1", :netmask => "255.255.0.0", :mac => "0123456789"
     v.vm.provider :virtualbox do |vb|
-      vb.customize ['modifyvm', :id, '--memory', '1024']
+      vb.customize ['modifyvm', :id, '--memory', '1024', '--cpus', '1']
     end
   end
   c.vm.define 'vm2' do |v|
@@ -52,7 +52,7 @@ Vagrant.configure("2") do |c|
     v.vm.box_check_update = 'true'
     v.vm.network :private_network, ip: "ip.address.for.vm2", :netmask => "255.255.0.0", :mac => "0123456789"
     v.vm.provider :virtualbox do |vb|
-      vb.customize ['modifyvm', :id, '--memory', '1024']
+      vb.customize ['modifyvm', :id, '--memory', '1024', '--cpus', '1']
     end
   end
   c.vm.define 'vm3' do |v|
@@ -62,7 +62,7 @@ Vagrant.configure("2") do |c|
     v.vm.box_check_update = 'true'
     v.vm.network :private_network, ip: "ip.address.for.vm3", :netmask => "255.255.0.0", :mac => "0123456789"
     v.vm.provider :virtualbox do |vb|
-      vb.customize ['modifyvm', :id, '--memory', '1024']
+      vb.customize ['modifyvm', :id, '--memory', '1024', '--cpus', '1']
     end
   end
 end
@@ -120,16 +120,31 @@ EOF
 
       generated_file = File.read( File.expand_path( File.join( path, "Vagrantfile") ) )
 
-      match = generated_file.match(/vb.customize \['modifyvm', :id, '--memory', 'hello!'\]/)
+      match = generated_file.match(/vb.customize \['modifyvm', :id, '--memory', 'hello!', '--cpus', '1'\]/)
 
       expect( match ).to_not be nil
 
+    end
+    
+    it "uses the cpus defined per vagrant host" do
+      path = vagrant.instance_variable_get( :@vagrant_path )
+      allow( vagrant ).to receive( :randmac ).and_return( "0123456789" )
+  
+      vagrant.make_vfile( @hosts, {'vagrant_cpus' => 'goodbye!'} )
+  
+      generated_file = File.read( File.expand_path( File.join( path, "Vagrantfile") ) )
+  
+      match = generated_file.match(/vb.customize \['modifyvm', :id, '--memory', '1024', '--cpus', 'goodbye!'\]/)
+  
+      expect( match ).to_not be nil
+  
     end
 
     it "can generate a new /etc/hosts file referencing each host" do
 
       @hosts.each do |host|
-        expect( vagrant ).to receive( :set_etc_hosts ).with( host, "127.0.0.1\tlocalhost localhost.localdomain\nip.address.for.vm1\tvm1\nip.address.for.vm2\tvm2\nip.address.for.vm3\tvm3\n" ).once
+        expect( vagrant ).to receive( :get_domain_name ).with( host ).and_return( 'labs.lan' )
+        expect( vagrant ).to receive( :set_etc_hosts ).with( host, "127.0.0.1\tlocalhost localhost.localdomain\nip.address.for.vm1\tvm1.labs.lan vm1\nip.address.for.vm2\tvm2.labs.lan vm2\nip.address.for.vm3\tvm3.labs.lan vm3\n" ).once
       end
 
       vagrant.hack_etc_hosts( @hosts, options )

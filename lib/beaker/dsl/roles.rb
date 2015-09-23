@@ -89,6 +89,74 @@ module Beaker
         find_host_with_role :default
       end
 
+      # Determine if host is not a controller, does not have roles 'master',
+      # 'dashboard' or 'database'.
+      #
+      # @return [Boolean]      True if agent-only, false otherwise
+      #
+      # @example Basic usage
+      #     if not_controller(host)
+      #       puts "this host isn't in charge!"
+      #     end
+      #
+      def not_controller(host)
+        controllers = ['dashboard', 'database', 'master', 'console']
+        matched_roles = host['roles'].select { |v| controllers.include?(v) }
+        matched_roles.length == 0
+      end
+
+      # Determine if this host is exclusively an agent (only has a single role 'agent')
+      #
+      # @param [Host] host Beaker host to check
+      #
+      # @example Basic usage
+      #     if agent_only(host)
+      #       puts "this host is ONLY an agent!"
+      #     end
+      #
+      # @return [Boolean]      True if agent-only, false otherwise
+      def agent_only(host)
+          host['roles'].length == 1 && host['roles'].include?('agent')
+      end
+
+      # Determine whether a host has an AIO version or not. If a host :pe_ver or :version
+      # is not specified, then it is open-ended, and as such, can be an AIO
+      # version depending on the context.
+      #
+      # True when any of the following cases are true
+      #   * has PE version (:pe_ver) >= 4.0
+      #   * has FOSS version (:version) >= 4.0
+      #   * host has role 'aio'
+      #   * host as the type 'aio'
+      #
+      # @note aio version is just a base-line condition.  If you want to check
+      #   that a host is an aio agent, refer to {#aio_agent?}.
+      #
+      # @return [Boolean] whether or not a host is AIO-capable
+      def aio_version?(host)
+        return (( host[:pe_ver] && !version_is_less(host[:pe_ver], '4.0') ) ||
+               ( host[:version] && !version_is_less(host[:version], '4.0') ) ||
+               ( host[:roles] && host[:roles].include?('aio')) ||
+               ( host[:type] && !!(host[:type] =~ /(\A|-)aio(\Z|-)/ ))) == true
+      end
+
+      # Determine if the host is an AIO agent
+      #
+      # @param [Host] host Beaker host to check
+      #
+      # @return [Boolean] whether this host is an AIO agent or not
+      def aio_agent?(host)
+        aio_version?(host) && agent_only(host)
+      end
+
+      # Add the provided role to the host
+      #
+      # @param [Host] host Host to add role to
+      # @param [String] role The role to add to host
+      def add_role(host, role)
+        host[:roles] = host[:roles] | [role]
+      end
+
       #Create a new role method for a given arbitrary role name.  Makes it possible to be able to run
       #commands without having to refer to role by String or Symbol.  Will not add a new method 
       #definition if the name is already in use.
@@ -105,7 +173,7 @@ module Beaker
         else
           if not respond_to? role
             if role !~ /\A[[:alpha:]]+[a-zA-Z0-9_]*[!?=]?\Z/
-              raise "Role name format error for '#{role}'.  Allowed characters are: \na-Z\n0-9 (as long as not at the beginning of name)\n'_'\n'?', '!' and '=' (only as individual last character at end of name)"
+              raise ArgumentError, "Role name format error for '#{role}'.  Allowed characters are: \na-Z\n0-9 (as long as not at the beginning of name)\n'_'\n'?', '!' and '=' (only as individual last character at end of name)"
             end
             self.class.send :define_method, role.to_s do
               hosts_with_role = hosts_as role.to_sym

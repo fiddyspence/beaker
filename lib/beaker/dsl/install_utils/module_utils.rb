@@ -110,6 +110,7 @@ module Beaker
             opts = {:source => './',
                     :target_module_path => host['distmoduledir'],
                     :ignore_list => PUPPET_MODULE_INSTALL_IGNORE}.merge(opts)
+
             ignore_list = build_ignore_list(opts)
             target_module_dir = on( host, "echo #{opts[:target_module_path]}" ).stdout.chomp
             source_path = File.expand_path( opts[:source] )
@@ -122,6 +123,9 @@ module Beaker
             end
 
             target_path = File.join(target_module_dir, module_name)
+            if host.is_powershell? #make sure our slashes are correct
+              target_path = target_path.gsub(/\//,'\\')
+            end
 
             opts[:protocol] ||= 'scp'
             case opts[:protocol]
@@ -131,13 +135,7 @@ module Beaker
               scp_to host, source_path, target_module_dir, {:ignore => ignore_list}
               #rename to the selected module name, if not correct
               cur_path = File.join(target_module_dir, source_name)
-              if (cur_path != target_path)
-                if host.is_powershell?
-                  on host, "move /y #{cur_path} #{target_path}"
-                else
-                  on host, "mv #{cur_path} #{target_path}"
-                end
-              end
+              host.mv cur_path, target_path unless cur_path == target_path
             when 'rsync'
               logger.debug "Using rsync to transfer #{source_path} to #{target_path}"
               rsync_to host, source_path, target_path, {:ignore => ignore_list}

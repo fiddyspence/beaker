@@ -137,12 +137,78 @@ module Beaker
         end
       end
 
-      describe 'parse_args' do
+      describe '#parse_args' do
         before { FakeFS.deactivate! }
 
         it 'pulls the args into key called :command_line' do
           my_args = [ '--log-level', 'debug', '-h', hosts_path]
           expect(parser.parse_args( my_args )[:command_line]).to include(my_args.join(' '))
+        end
+
+        describe 'does prioritization correctly' do
+          let(:env)       { @env || {:level => 'highest'} }
+          let(:argv)      { @argv || {:level => 'second'} }
+          let(:host_file) { @host_file || {:level => 'third'} }
+          let(:opt_file)  { @opt_file || {:level => 'fourth' } }
+          let(:presets)   { {:level => 'lowest' } }
+
+          before :each do
+            expect(parser).to receive( :normalize_args ).and_return( true )
+          end
+
+          def mock_out_parsing
+            presets_obj = double()
+            allow( presets_obj ).to receive( :presets ).and_return( presets )
+            allow( presets_obj ).to receive( :env_vars ).and_return( env )
+            parser.instance_variable_set( :@presets, presets_obj )
+
+            command_line_parser_obj = double()
+            allow( command_line_parser_obj ).to receive( :parse ).and_return( argv )
+            parser.instance_variable_set( :@command_line_parser, command_line_parser_obj )
+
+            allow( OptionsFileParser ).to receive( :parse_options_file ).and_return( opt_file )
+            allow( HostsFileParser ).to receive( :parse_hosts_file ).and_return( host_file )
+          end
+
+          it 'presets have the lowest priority' do
+            @env = @argv = @host_file = @opt_file = {}
+            mock_out_parsing
+
+            opts = parser.parse_args([])
+            expect( opts[:level] ).to be == 'lowest'
+          end
+
+          it 'options file has fourth priority' do
+            @env = @argv = @host_file = {}
+            mock_out_parsing
+
+            opts = parser.parse_args([])
+            expect( opts[:level] ).to be == 'fourth'
+          end
+
+          it 'host file CONFIG section has third priority' do
+            @env = @argv = {}
+            mock_out_parsing
+
+            opts = parser.parse_args([])
+            expect( opts[:level] ).to be == 'third'
+          end
+
+          it 'command line arguments have second priority' do
+            @env = {}
+            mock_out_parsing
+
+            opts = parser.parse_args([])
+            expect( opts[:level] ).to be == 'second'
+          end
+
+          it 'env vars have highest priority' do
+            mock_out_parsing
+
+            opts = parser.parse_args([])
+            expect( opts[:level] ).to be == 'highest'
+          end
+
         end
 
         it "can correctly combine arguments from different sources" do
@@ -167,10 +233,6 @@ module Beaker
           expect{parser.parse_args(args)}.to raise_error(ArgumentError)
         end
 
-        it "ensures that type is one of pe/git" do
-          args = ["-h", hosts_path, "--log-level", "debug", "--type", "unkowns"]
-          expect{parser.parse_args(args)}.to raise_error(ArgumentError)
-        end
       end
 
       context "set_default_host!" do
@@ -215,16 +277,22 @@ module Beaker
 
       describe "normalize_args" do
         let(:hosts) do
-          {
+          Beaker::Options::OptionsHash.new.merge({
             'HOSTS' => {
               :master => {
                 :roles => ["master","agent","arbitrary_role"],
+                :platform => 'el-7-x86_64',
+                :user => 'root',
               },
               :agent => {
                 :roles => ["agent","default","other_abitrary_role"],
+                :platform => 'el-7-x86_64',
+                :user => 'root',
               },
-            }
-          }
+            },
+            'fail_mode' => 'slow',
+            'preserve_hosts' => 'always',
+          })
         end
 
         def fake_hosts_file_for_platform(hosts, platform)
@@ -237,33 +305,120 @@ module Beaker
         end
 
         shared_examples_for(:a_platform_supporting_only_agents) do |platform,type|
-          let(:args) { ["--type", type] }
 
-          it "restricts #{platform} hosts to agent for #{type}" do
+          it "restricts #{platform} hosts to agent" do
+            args = []
             hosts_file = fake_hosts_file_for_platform(hosts, platform)
             args << "--hosts" << hosts_file
             expect { parser.parse_args(args) }.to raise_error(ArgumentError, /#{platform}.*may not have roles 'master', 'dashboard', or 'database'/)
           end
         end
 
-        context "for pe" do
-          it_should_behave_like(:a_platform_supporting_only_agents, 'solaris-version-arch', 'pe')
-          it_should_behave_like(:a_platform_supporting_only_agents, 'windows-version-arch', 'pe')
-          it_should_behave_like(:a_platform_supporting_only_agents, 'el-4-arch', 'pe')
+        context "restricts agents" do
+          it_should_behave_like(:a_platform_supporting_only_agents, 'windows-version-arch')
+          it_should_behave_like(:a_platform_supporting_only_agents, 'el-4-arch')
         end
 
-        context "for foss" do
-          it_should_behave_like(:a_platform_supporting_only_agents, 'windows-version-arch', 'git')
-          it_should_behave_like(:a_platform_supporting_only_agents, 'el-4-arch', 'git')
+        context "ssh user" do
 
-          it "allows master role for solaris" do
-            hosts_file = fake_hosts_file_for_platform(hosts, 'solaris-version-arch')
-            args = ["--type", "git", "--hosts", hosts_file]
-            options_hash = parser.parse_args(args)
-            expect(options_hash[:HOSTS][:master][:platform]).to match(/solaris/)
-            expect(options_hash[:HOSTS][:master][:roles]).to include('master')
-            expect(options_hash[:type]).to eq('git')
+          it 'uses the ssh[:user] if it is provided' do
+            hosts['HOSTS'][:master][:ssh] = { :user => 'hello' }
+            parser.instance_variable_set(:@options, hosts)
+            parser.normalize_args
+            expect( hosts['HOSTS'][:master][:user] ).to be ==  'hello'
           end
+
+          it 'uses default user if there is an ssh hash, but no ssh[:user]' do
+            hosts['HOSTS'][:master][:ssh] = { :hello => 'hello' }
+            parser.instance_variable_set(:@options, hosts)
+            parser.normalize_args
+            expect( hosts['HOSTS'][:master][:user] ).to be ==  'root'
+          end
+
+          it 'uses default user if no ssh hash' do
+            parser.instance_variable_set(:@options, hosts)
+            parser.normalize_args
+            expect( hosts['HOSTS'][:master][:user] ).to be ==  'root'
+          end
+        end
+
+      end
+
+      describe '#normalize_and_validate_tags' do
+        let ( :tag_includes ) { @tag_includes || [] }
+        let ( :tag_excludes ) { @tag_excludes || [] }
+        let ( :options )      {
+          opts = Beaker::Options::OptionsHash.new
+          opts[:tag_includes] = tag_includes
+          opts[:tag_excludes] = tag_excludes
+          opts
+        }
+
+        it 'does not error if no tags overlap' do
+          @tag_includes = 'can,tommies,potatoes,plant'
+          @tag_excludes = 'joey,long_running,pants'
+          parser.instance_variable_set(:@options, options)
+
+          expect( parser ).to_not receive( :parser_error )
+          parser.normalize_and_validate_tags()
+        end
+
+        it 'does error if tags overlap' do
+          @tag_includes = 'can,tommies,should_error,potatoes,plant'
+          @tag_excludes = 'joey,long_running,pants,should_error'
+          parser.instance_variable_set(:@options, options)
+
+          expect( parser ).to receive( :parser_error )
+          parser.normalize_and_validate_tags()
+        end
+
+        it 'splits the basic case correctly' do
+          @tag_includes = 'can,tommies,potatoes,plant'
+          @tag_excludes = 'joey,long_running,pants'
+          parser.instance_variable_set(:@options, options)
+
+          parser.normalize_and_validate_tags()
+          expect( options[:tag_includes] ).to be === ['can', 'tommies', 'potatoes', 'plant']
+          expect( options[:tag_excludes] ).to be === ['joey', 'long_running', 'pants']
+        end
+
+        it 'returns empty arrays for empty strings' do
+          @tag_includes = ''
+          @tag_excludes = ''
+          parser.instance_variable_set(:@options, options)
+
+          parser.normalize_and_validate_tags()
+          expect( options[:tag_includes] ).to be === []
+          expect( options[:tag_excludes] ).to be === []
+        end
+
+        it 'lowercases all tags correctly for later use' do
+          @tag_includes = 'jeRRy_And_tOM,PARka'
+          @tag_excludes = 'lEet_spEAK,pOland'
+          parser.instance_variable_set(:@options, options)
+
+          parser.normalize_and_validate_tags()
+          expect( options[:tag_includes] ).to be === ['jerry_and_tom', 'parka']
+          expect( options[:tag_excludes] ).to be === ['leet_speak', 'poland']
+        end
+      end
+
+      describe '#resolve_symlinks' do
+        let ( :options )  { Beaker::Options::OptionsHash.new }
+
+        it 'calls File.realpath if hosts_file is set' do
+          options[:hosts_file] = opts_path
+          parser.instance_variable_set(:@options, options)
+
+          parser.resolve_symlinks()
+          expect( parser.instance_variable_get(:@options)[:hosts_file] ).to be === opts_path
+        end
+
+        it 'does not throw an error if hosts_file is not set' do
+          options[:hosts_file] = nil
+          parser.instance_variable_set(:@options, options)
+
+          expect{ parser.resolve_symlinks() }.to_not raise_error
         end
       end
     end
